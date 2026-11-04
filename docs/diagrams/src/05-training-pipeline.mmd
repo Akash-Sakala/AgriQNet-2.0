@@ -1,0 +1,20 @@
+flowchart TB
+  classDef s fill:#F7F4EC,stroke:#8A958C,color:#13261E
+  classDef q fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
+  classDef out fill:#DCEBDD,stroke:#2A7040,color:#13261E
+
+  subgraph Row1[" "]
+    direction LR
+    A["[[test-tube:#2A7040]]<b>1 · Soil test</b><br/>N, P, K, weather,<br/>soil & crop type"]:::s --> B["[[sliders:#4A574F]]<b>2 · Clean & scale</b><br/>impute gaps, scale to ±1<br/>fit on training folds only"]:::s
+    B --> C["[[atom:#5B3FD0]]<b>3 · Quantum circuits</b><br/>fingerprints for Q-SVM<br/>15-circuit feature bank"]:::q
+    C --> D["[[funnel:#5B3FD0]]<b>4 · QUBO selection</b><br/>relevance − redundancy"]:::q
+  end
+  subgraph Row2[" "]
+    direction RL
+    E["[[brain:#4A574F]]<b>5 · Models</b><br/>classical SVM · Q-SVM · SVM+QF<br/>+ tuned model zoo"]:::s --> F["[[scales:#4A574F]]<b>6 · Fair test</b><br/>nested CV · Optuna<br/>scored on unseen farms"]:::s
+    F --> G["[[gauge:#4A574F]]<b>7 · Confidence</b><br/>temperature calibration<br/>top-3 · 90% conformal set"]:::s
+    G --> H["[[rocket-launch:#2A7040]]<b>8 · Serve</b><br/>joblib pipeline + manifest<br/>in the app, 4 languages"]:::out
+  end
+  D --> E
+  style Row1 fill:none,stroke:none
+  style Row2 fill:none,stroke:none

@@ -1,0 +1,14 @@
+flowchart TB
+  classDef step fill:#EAF2EC,stroke:#1F4D3A,color:#13261E
+  classDef stop fill:#FBE9E7,stroke:#B23A2E,color:#5A1A12
+  classDef dup fill:#FBF3DC,stroke:#C9A227,color:#13261E
+  classDef done fill:#1F4D3A,stroke:#1F4D3A,color:#ffffff
+
+  U["[[upload-simple:#1F4D3A]]<b>Upload a PDF or paste a link</b>"]:::step --> CK{"Duplicate?<br/>file SHA-256 · text hash ·<br/>MinHash Jaccard ≥ 0.85"}:::dup
+  CK -- yes --> OPEN["[[book-open:#A8841B]]<b>Open the existing book's chat</b>"]:::dup
+  CK -- no --> RD["[[file-text:#1F4D3A]]<b>Read</b><br/>PyMuPDF text per page · headings ·<br/>Nudi/Baraha Kannada → Unicode"]:::step
+  RD -- "no text layer" --> X1["[[prohibit:#B23A2E]]<b>Rejected</b><br/>scanned pages"]:::stop
+  RD --> TP["[[tag:#1F4D3A]]<b>Topic check</b> (1 LLM call)<br/>title, summary, questions in 4 languages"]:::step
+  TP -- "not farming" --> X2["[[prohibit:#B23A2E]]<b>Rejected</b><br/>not agriculture"]:::stop
+  TP --> IX["[[list-magnifying-glass:#1F4D3A]]<b>Index</b><br/>~1,100-char page-aware chunks →<br/>multilingual-e5 vectors + BM25 (one index per book)"]:::step
+  IX --> CV["[[image:#1F4D3A]]<b>Cover</b>"]:::step --> OK["[[check-circle:#FFFFFF]]<b>Ready on the shelf</b>"]:::done

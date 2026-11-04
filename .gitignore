@@ -22,3 +22,6 @@ ANNUAL HIGHLIGHTS 2025-26.pdf
 
 # Local working notes (not published)
 notes/
+
+# Diagram build tools (docs/diagrams/build_diagrams.py)
+.diagram-tools/

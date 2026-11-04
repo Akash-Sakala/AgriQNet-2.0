@@ -1,0 +1,13 @@
+flowchart LR
+  classDef src fill:#ffffff,stroke:#8A958C,color:#4A574F,stroke-dasharray:4 3
+  classDef s fill:#EAF2F8,stroke:#2E6DA4,color:#13261E
+  classDef out fill:#F7F4EC,stroke:#1F4D3A,color:#13261E
+
+  OW["[[cloud-sun:#2E6DA4]]<b>OpenWeather</b><br/>current · 5-day · search · map layers"]:::src --> WX["[[device-mobile:#2E6DA4]]<b>Weather station</b> :5175"]:::s
+  OM["[[calendar:#2E6DA4]]<b>Open-Meteo</b><br/>16-day daily forecast (no key)"]:::src --> RULES["[[gear:#2E6DA4]]<b>Rule engine</b> (API)<br/>IMD rain categories · heat · cold ·<br/>wind gusts · thunderstorm codes"]:::s
+  RULES --> WA["[[warning:#C27A1A]]<b>Farm weather alerts</b><br/>RED / ORANGE / YELLOW, 4 languages"]:::out
+  RULES --> ADV
+  ALERTS["[[bug:#B5532A]]<b>Active pest alerts</b><br/>reaching the district (BFS)"]:::src --> ADV["[[lightbulb:#2E6DA4]]<b>Weekly advice</b><br/>district + season + crops + forecast<br/>(Gemini, cached per day & language)"]:::s
+  ADV --> HOME["[[house:#1F4D3A]]<b>'This week in {district}'</b> on Home"]:::out
+  WA --> WX
+  WA --> SMS["[[chat-text:#B23A2E]]<b>Optional SMS</b><br/>POST /weather/alerts/notify"]:::out

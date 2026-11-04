@@ -1,0 +1,6 @@
+flowchart LR
+  classDef red fill:#C0392B,stroke:#8E2A1F,color:#fff
+  classDef orange fill:#E38B2C,stroke:#B5651D,color:#fff
+  classDef yellow fill:#E9C93B,stroke:#B89A1E,color:#13261E
+  R0["[[warning-octagon:#FFFFFF]]<b>Reported district</b><br/>0 hops → RED"]:::red --- O1["[[warning:#FFFFFF]]<b>Neighbour</b><br/>1 hop → ORANGE"]:::orange --- Y2["[[info:#13261E]]<b>Neighbour's neighbour</b><br/>2 hops → YELLOW"]:::yellow
+  R0 --- O2["[[warning:#FFFFFF]]<b>Neighbour</b><br/>1 hop → ORANGE"]:::orange

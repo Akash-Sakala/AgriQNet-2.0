@@ -1,0 +1,40 @@
+flowchart TB
+  classDef ui fill:#F7F4EC,stroke:#1F4D3A,color:#13261E
+  classDef gw fill:#1F4D3A,stroke:#1F4D3A,color:#ffffff
+  classDef py fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
+  classDef db fill:#FBF0DC,stroke:#C9A227,color:#13261E
+  classDef ext fill:#ffffff,stroke:#8A958C,color:#4A574F,stroke-dasharray:4 3
+
+  subgraph Browser["Browser · phone or PC"]
+    direction LR
+    WEB["[[device-mobile:#1F4D3A]]<b>AgriQNet app</b><br/>React + Vite · :3000"]:::ui
+    WX["[[cloud-sun:#2E6DA4]]<b>Weather station</b><br/>React + Vite · :5175"]:::ui
+  end
+
+  API["[[plugs-connected:#FFFFFF]]<b>API gateway</b><br/>Node + Express · :5000<br/>auth · OTP/SMS · alerts · AI proxy"]:::gw
+
+  subgraph Local["Local services (started by npm start)"]
+    direction TB
+    DB["[[database:#A8841B]]<b>MongoDB 7</b><br/>embedded · :27017"]:::db
+    YOLO["[[bug:#B5532A]]<b>Pest detector</b><br/>FastAPI + YOLOv8 · :8001"]:::py
+    REC["[[atom:#5B3FD0]]<b>Recommender</b><br/>FastAPI + quantum-hybrid · :8002"]:::py
+    RAG["[[books:#6B4C8A]]<b>Farmer Library</b><br/>FastAPI + RAG · :8003"]:::py
+  end
+
+  subgraph Cloud["External APIs (keys in .env)"]
+    direction TB
+    GEM["[[sparkle:#5B3FD0]]<b>Gemini · Groq</b><br/>LLM answers & advice"]:::ext
+    TW["[[chat-text:#B23A2E]]<b>Twilio</b><br/>OTP & alert SMS"]:::ext
+    WXAPI["[[cloud-rain:#2E6DA4]]<b>Open-Meteo · OpenWeather</b><br/>weather forecasts"]:::ext
+    SV["[[speaker-high:#2A7040]]<b>Sarvam</b><br/>read-aloud voice"]:::ext
+  end
+
+  WEB -. "embeds" .-> WX
+  Browser -- "/api (Vite proxy)" --> API
+  API -- "HTTP / Mongo driver" --> Local
+  API -. "AI · SMS · forecasts · voice" .-> Cloud
+  Local -. "RAG answers" .-> Cloud
+
+  style Browser fill:#FBF8F0,stroke:#DCD4BF
+  style Local fill:#F6F4FB,stroke:#C9BFEF
+  style Cloud fill:#FFFFFF,stroke:#DCD4BF,stroke-dasharray:4 3

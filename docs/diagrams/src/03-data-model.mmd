@@ -1,0 +1,44 @@
+erDiagram
+  USER ||--o| FARMER : "subscribes as"
+  DISTRICT ||--o{ EDGE : "borders"
+  DISTRICT ||--o{ FARMER : "home of"
+  DISTRICT ||--o{ ALERT : "reported in"
+  ALERT ||--o{ ALERT_RECIPIENT : "fans out to"
+  FARMER ||--o{ ALERT_RECIPIENT : "receives"
+  PEST ||--o{ ALERT : "names"
+  USER {
+    string phone
+    string passwordHash
+    string role "farmer | officer"
+    string lang "en | hi | kn | te"
+    string districtId
+    array crops
+  }
+  FARMER {
+    string id
+    string phone
+    string districtId
+    string lang
+    bool isDemo "never texted"
+  }
+  DISTRICT {
+    string id
+    string name
+    object geo
+    array majorCrops
+  }
+  ALERT {
+    string id
+    string pestType
+    string severity "RED | ORANGE | YELLOW"
+    string status "PENDING | ACTIVE | REJECTED"
+    string reason "confident | corroborated | approved"
+    object detection
+  }
+  ALERT_RECIPIENT {
+    string alertId
+    string farmerId
+    string zone
+    int hops
+    string smsStatus
+  }

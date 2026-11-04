@@ -1,0 +1,16 @@
+flowchart TB
+  classDef raw fill:#F7F4EC,stroke:#8A958C,color:#13261E
+  classDef q fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
+  classDef m fill:#DCEBDD,stroke:#2A7040,color:#13261E
+  classDef base fill:#FBF0DC,stroke:#C27A1A,color:#13261E
+
+  IN["[[plant:#2A7040]]<b>Farm readings</b><br/>N, P, K, weather…"]:::raw
+  IN --> C0["[[chart-scatter:#C27A1A]]<b>Classical SVM</b><br/>'alike' = close numbers"]:::base
+
+  IN --> FP["[[atom:#5B3FD0]]<b>Upgrade 1 · one fixed circuit</b><br/>angle encoding + CNOT ring, s = 1.5"]:::q
+  FP --> K["[[fingerprint:#5B3FD0]]<b>Fidelity kernel</b><br/>similarity = overlap of quantum fingerprints"]:::q
+  K --> QSVM["[[target:#2A7040]]<b>Q-SVM</b>"]:::m
+
+  IN --> BANK["[[stack:#5B3FD0]]<b>Upgrade 2 · feature bank</b><br/>15 fixed circuits → hundreds of features"]:::q
+  BANK --> QUBO["[[funnel:#5B3FD0]]<b>QUBO selection</b><br/>keep useful, non-repeating features"]:::q
+  QUBO --> QF["[[chart-line-up:#2A7040]]<b>SVM + quantum features</b><br/>raw readings + selected features"]:::m

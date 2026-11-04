@@ -1,0 +1,20 @@
+sequenceDiagram
+  autonumber
+  actor F as Farmer (phone)
+  participant W as Web app :3000
+  participant A as API gateway :5000
+  participant R as Recommender :8002
+  participant G@{ "type": "queue" } as Gemini / Groq
+  F->>W: Which crop? → enters N, P, K, pH, rainfall…
+  W->>A: POST /api/recommend/crop
+  A->>R: POST /api/crop_recommender/predict
+  R->>R: quantum features → QUBO → model
+  R-->>A: prediction, calibrated top-3, 90% conformal set, model info
+  A-->>W: JSON (+ source: local | hosted fallback)
+  W-->>F: "Rice · 99.7%" card + Listen (in the farmer's language)
+  opt GenAI Advisor tab
+    W->>A: POST /api/ai/crops
+    A->>G: prompt with district, season, soil
+    G-->>A: plan
+    A-->>W: plan (translated & cached per language)
+  end

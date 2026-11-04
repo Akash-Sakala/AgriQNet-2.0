@@ -131,7 +131,7 @@ Recommends the right crop and fertilizer from a soil test · identifies pests fr
 
 </details>
 
-All screenshots, with titles and captions in story order, are in [`docs/demo_assets/`](docs/demo_assets) ([`manifest.json`](docs/demo_assets/manifest.json)). PNG versions of every diagram below are in [`docs/diagrams/`](docs/diagrams).
+All screenshots, with titles and captions in story order, are in [`docs/demo_assets/`](docs/demo_assets) ([`manifest.json`](docs/demo_assets/manifest.json)). Diagrams use icons from [Phosphor](https://phosphoricons.com) (the icon set used in the app); their Mermaid sources and build script are in [`docs/diagrams/`](docs/diagrams).
 
 ---
 
@@ -139,48 +139,7 @@ All screenshots, with titles and captions in story order, are in [`docs/demo_ass
 
 The browser talks to a single **API gateway**. The gateway owns users, alerts and SMS, keeps every API key on the server, and forwards specialist work to three Python services.
 
-```mermaid
-flowchart TB
-  classDef ui fill:#F7F4EC,stroke:#1F4D3A,color:#13261E
-  classDef gw fill:#1F4D3A,stroke:#1F4D3A,color:#ffffff
-  classDef py fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
-  classDef db fill:#FBF0DC,stroke:#C9A227,color:#13261E
-  classDef ext fill:#ffffff,stroke:#8A958C,color:#4A574F,stroke-dasharray:4 3
-
-  subgraph Browser["Browser · phone or PC"]
-    direction LR
-    WEB["AgriQNet app<br/>React + Vite · :3000"]:::ui
-    WX["Weather station<br/>React + Vite · :5175"]:::ui
-  end
-
-  API["API gateway<br/>Node + Express · :5000<br/>auth · OTP/SMS · alerts · AI proxy"]:::gw
-
-  subgraph Local["Local services (started by npm start)"]
-    direction TB
-    DB[("MongoDB 7 · :27017<br/>embedded, persistent")]:::db
-    YOLO["Pest detector<br/>FastAPI + YOLOv8 · :8001"]:::py
-    REC["Recommender<br/>FastAPI + quantum-hybrid v3 · :8002"]:::py
-    RAG["Farmer Library / AgriRAG<br/>FastAPI · :8003"]:::py
-  end
-
-  subgraph Cloud["External APIs (keys in .env)"]
-    direction TB
-    GEM["Gemini · Groq<br/>LLM answers & advice"]:::ext
-    TW["Twilio<br/>OTP & alert SMS"]:::ext
-    WXAPI["Open-Meteo · OpenWeather<br/>weather forecasts"]:::ext
-    SV["Sarvam<br/>read-aloud voice"]:::ext
-  end
-
-  WEB -. "embeds" .-> WX
-  Browser -- "/api (Vite proxy)" --> API
-  API -- "HTTP / Mongo driver" --> Local
-  API -. "AI · SMS · forecasts · voice" .-> Cloud
-  Local -. "RAG answers" .-> Cloud
-
-  style Browser fill:#FBF8F0,stroke:#DCD4BF
-  style Local fill:#F6F4FB,stroke:#C9BFEF
-  style Cloud fill:#FFFFFF,stroke:#DCD4BF,stroke-dasharray:4 3
-```
+<p align="center"><img src="docs/diagrams/01-architecture.png" width="780" alt="AgriQNet architecture: browser apps, API gateway, local services and external APIs"></p>
 
 | Service | Port | Built with | Responsibility |
 |---|---|---|---|
@@ -196,78 +155,12 @@ A launcher script (`npm start`) installs everything on the first run, starts the
 
 **Example: what happens when a farmer asks "Which crop?"**
 
-```mermaid
-sequenceDiagram
-  autonumber
-  actor F as Farmer (phone)
-  participant W as Web app :3000
-  participant A as API gateway :5000
-  participant R as Recommender :8002
-  participant G as Gemini / Groq
-  F->>W: Which crop? → enters N, P, K, pH, rainfall…
-  W->>A: POST /api/recommend/crop
-  A->>R: POST /api/crop_recommender/predict
-  R->>R: scale → 7-qubit circuit features → QUBO-selected columns → model
-  R-->>A: prediction, calibrated top-3, 90% conformal set, model info
-  A-->>W: JSON (+ source: local | hosted fallback)
-  W-->>F: "Rice · 99.7%" card + 🔊 Listen (in the farmer's language)
-  opt GenAI Advisor tab
-    W->>A: POST /api/ai/crops
-    A->>G: prompt with district, season, soil
-    G-->>A: plan
-    A-->>W: plan (translated & cached per language)
-  end
-```
+<p align="center"><img src="docs/diagrams/02-request-sequence.png" width="900" alt="Sequence of a crop recommendation request"></p>
 
 <details>
 <summary><b>Data model</b> (MongoDB collections)</summary>
 
-```mermaid
-erDiagram
-  USER ||--o| FARMER : "subscribes as"
-  DISTRICT ||--o{ EDGE : "borders"
-  DISTRICT ||--o{ FARMER : "home of"
-  DISTRICT ||--o{ ALERT : "reported in"
-  ALERT ||--o{ ALERT_RECIPIENT : "fans out to"
-  FARMER ||--o{ ALERT_RECIPIENT : "receives"
-  PEST ||--o{ ALERT : "names"
-  USER {
-    string phone
-    string passwordHash
-    string role "farmer | officer"
-    string lang "en | hi | kn | te"
-    string districtId
-    array crops
-  }
-  FARMER {
-    string id
-    string phone
-    string districtId
-    string lang
-    bool isDemo "never texted"
-  }
-  DISTRICT {
-    string id
-    string name
-    object geo
-    array majorCrops
-  }
-  ALERT {
-    string id
-    string pestType
-    string severity "RED | ORANGE | YELLOW"
-    string status "PENDING | ACTIVE | REJECTED"
-    string reason "confident | corroborated | approved"
-    object detection
-  }
-  ALERT_RECIPIENT {
-    string alertId
-    string farmerId
-    string zone
-    int hops
-    string smsStatus
-  }
-```
+<p align="center"><img src="docs/diagrams/03-data-model.png" width="760" alt="MongoDB data model"></p>
 
 Also stored: one-time passwords (hashed), an SMS outbox, weekly advice cached per district and language, and ID counters.
 
@@ -304,24 +197,7 @@ To keep the test fair, I took one standard model, the **support vector machine (
 
 ### 3.3 Two ways to upgrade the SVM
 
-```mermaid
-flowchart TB
-  classDef raw fill:#F7F4EC,stroke:#8A958C,color:#13261E
-  classDef q fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
-  classDef m fill:#DCEBDD,stroke:#2A7040,color:#13261E
-  classDef base fill:#FBF0DC,stroke:#C27A1A,color:#13261E
-
-  IN["Farm readings<br/>N, P, K, weather…"]:::raw
-  IN --> C0["Classical SVM<br/>'alike' = close numbers"]:::base
-
-  IN --> FP["Upgrade 1 · one fixed circuit<br/>angle encoding + CNOT ring, s = 1.5"]:::q
-  FP --> K["Fidelity kernel<br/>similarity = overlap of quantum fingerprints"]:::q
-  K --> QSVM["Q-SVM"]:::m
-
-  IN --> BANK["Upgrade 2 · feature bank<br/>15 fixed circuits → hundreds of features"]:::q
-  BANK --> QUBO["QUBO selection<br/>keep useful, non-repeating features"]:::q
-  QUBO --> QF["SVM + quantum features<br/>raw readings + selected features"]:::m
-```
+<p align="center"><img src="docs/diagrams/04-quantum-upgrades.png" width="640" alt="Classical SVM and its two quantum upgrades"></p>
 
 - **Upgrade 1 — Q-SVM (a new sense of "similar").** Each farm becomes a quantum *fingerprint*. The SVM treats two farms as alike when their fingerprints overlap, instead of when their numbers are close.
 - **Upgrade 2 — SVM + quantum features (better inputs).** Fifteen fixed circuits, from five designs at several strengths, turn every farm into hundreds of new features: 1,008 for crop, 234 for NPK fertilizer and 765 for 8-input fertilizer.
@@ -338,28 +214,7 @@ flowchart TB
 
 ### 3.4 Training and testing
 
-```mermaid
-flowchart TB
-  classDef s fill:#F7F4EC,stroke:#8A958C,color:#13261E
-  classDef q fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
-  classDef out fill:#DCEBDD,stroke:#2A7040,color:#13261E
-
-  subgraph Row1[" "]
-    direction LR
-    A["1 · Soil test<br/>N, P, K, weather,<br/>soil & crop type"]:::s --> B["2 · Clean & scale<br/>impute gaps, scale to ±1<br/>fit on training folds only"]:::s
-    B --> C["3 · Quantum circuits<br/>fingerprints for Q-SVM<br/>15-circuit feature bank"]:::q
-    C --> D["4 · QUBO selection<br/>relevance − redundancy"]:::q
-  end
-  subgraph Row2[" "]
-    direction RL
-    E["5 · Models<br/>classical SVM · Q-SVM · SVM+QF<br/>+ tuned model zoo"]:::s --> F["6 · Fair test<br/>nested CV · Optuna<br/>scored on unseen farms"]:::s
-    F --> G["7 · Confidence<br/>temperature calibration<br/>top-3 · 90% conformal set"]:::s
-    G --> H["8 · Serve<br/>joblib pipeline + manifest<br/>in the app, 4 languages"]:::out
-  end
-  D --> E
-  style Row1 fill:none,stroke:none
-  style Row2 fill:none,stroke:none
-```
+<p align="center"><img src="docs/diagrams/05-training-pipeline.png" width="900" alt="Eight-step training pipeline"></p>
 
 - **The circuits are fixed; only the classical model learns.** Trainable circuits are slow and often get stuck, and fixed ones keep the comparison fair.
 - **No data leakage.** Scaling, filling missing values, building features and QUBO selection all run inside one scikit-learn pipeline, fitted on training farms only.
@@ -385,65 +240,17 @@ flowchart TB
 
 Picks the 8-input fertilizer model when all inputs are present, and otherwise uses the N/P/K model. The circuits run on a small NumPy simulator bundled with the service, so a prediction takes 5–100 ms on a CPU.
 
-```mermaid
-flowchart LR
-  classDef q fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
-  classDef s fill:#F7F4EC,stroke:#8A958C,color:#13261E
-  classDef d fill:#FBF0DC,stroke:#C27A1A,color:#13261E
-
-  REQ["POST /recommend/fertilizer<br/>N, P, K (+ temp, humidity,<br/>moisture, soil, crop)"]:::s --> CHK{"all 8 inputs<br/>and mappable?"}:::d
-  CHK -- yes --> M8["fert_full8 pipeline<br/>6 qubits"]:::q
-  CHK -- no --> M3["fert_npk pipeline<br/>3 qubits"]:::q
-  M8 --> OUT
-  M3 --> OUT["prediction · top-3 ·<br/>conformal set · model info"]:::s
-  M8 -. "load or self-test failed" .-> LEG["v1 legacy models"]:::d
-  M3 -.-> LEG
-```
+<p align="center"><img src="docs/diagrams/06-recommender-service.png" width="860" alt="Recommender service flow"></p>
 
 ### 4.2 Pest detection and the alert network
 
 A farmer's photo goes to YOLOv8. If the farmer chooses to warn others, the server decides whether to send at once or wait for an officer.
 
-```mermaid
-sequenceDiagram
-  autonumber
-  actor F as Farmer
-  participant W as Web app
-  participant A as API gateway
-  participant Y as YOLOv8 :8001
-  participant DB as MongoDB
-  participant S as Twilio SMS
-  actor O as Officer
-  F->>W: Pest photo (camera or gallery)
-  W->>A: POST /api/pest/detect (multipart image)
-  A->>Y: POST /detect
-  Y-->>A: pest, confidence, boxes (top 5)
-  A-->>W: local pest name, host crop, IPM tips (+ AI advice)
-  F->>W: "Yes, warn nearby farmers" + severity
-  W->>A: POST /api/alerts
-  alt confidence ≥ 0.6 or a 2nd farmer reported it within 72 h
-    A->>DB: BFS over district graph → zone per farmer
-    A->>S: SMS in each farmer's language
-    A-->>W: "Warning sent to N farmers in M districts"
-  else needs review
-    A->>DB: Alert PENDING
-    O->>A: Approve & send (or reject)
-    A->>DB: BFS → recipients
-    A->>S: SMS
-  end
-  Note over W,O: Alert Network map polls every 4 s → ripple + toast on the new zone
-```
+<p align="center"><img src="docs/diagrams/07-pest-alert-sequence.png" width="900" alt="Pest photo to SMS alert sequence"></p>
 
 **Who gets the SMS?** The 31 Karnataka districts and their 71 borders form a graph. A breadth-first search from the reported district finds everyone in range, and each farmer is placed in a zone by distance:
 
-```mermaid
-flowchart LR
-  classDef red fill:#C0392B,stroke:#8E2A1F,color:#fff
-  classDef orange fill:#E38B2C,stroke:#B5651D,color:#fff
-  classDef yellow fill:#E9C93B,stroke:#B89A1E,color:#13261E
-  R0["Reported district<br/>0 hops → RED"]:::red --- O1["Neighbour<br/>1 hop → ORANGE"]:::orange --- Y2["Neighbour's neighbour<br/>2 hops → YELLOW"]:::yellow
-  R0 --- O2["Neighbour<br/>1 hop → ORANGE"]:::orange
-```
+<p align="center"><img src="docs/diagrams/08-alert-zones.png" width="560" alt="Alert zones by hop distance"></p>
 
 | Severity chosen by the farmer | How far it spreads |
 |---|---|
@@ -455,62 +262,24 @@ Each farmer gets the SMS in their own language. Only officers can approve, rejec
 
 ### 4.3 Farmer Library (RAG)
 
-**Adding a book.** Uploads are checked for duplicates (same file, same text or a near-copy), read page by page (old Kannada fonts are converted to Unicode), checked to be about farming, then indexed.
+**Adding a book:** uploads are checked for duplicates (same file, same text or a near-copy), read page by page (old Kannada fonts are converted to Unicode), checked to be about farming, then indexed. **Answering a question:** the question is rewritten in English, searched by meaning and by keywords, reranked, and answered by an LLM using only the 8 best passages, with a citation after each fact.
 
-```mermaid
-flowchart TB
-  classDef step fill:#EAF2EC,stroke:#1F4D3A,color:#13261E
-  classDef stop fill:#FBE9E7,stroke:#B23A2E,color:#5A1A12
-  classDef dup fill:#FBF3DC,stroke:#C9A227,color:#13261E
-  classDef done fill:#1F4D3A,stroke:#1F4D3A,color:#ffffff
-
-  U["Upload a PDF or paste a link"]:::step --> CK{"Duplicate?<br/>file SHA-256 · text hash ·<br/>MinHash Jaccard ≥ 0.85"}:::dup
-  CK -- yes --> OPEN["Open the existing book's chat"]:::dup
-  CK -- no --> RD["Read<br/>PyMuPDF text per page · headings ·<br/>Nudi/Baraha Kannada → Unicode"]:::step
-  RD -- "no text layer" --> X1["Rejected: scanned pages"]:::stop
-  RD --> TP["Topic check (1 LLM call)<br/>title, summary, questions in 4 languages"]:::step
-  TP -- "not farming" --> X2["Rejected: not agriculture"]:::stop
-  TP --> IX["Index<br/>~1,100-char page-aware chunks →<br/>multilingual-e5 vectors + BM25 (one index per book)"]:::step
-  IX --> CV["Cover"]:::step --> OK["Ready on the shelf"]:::done
-```
-
-**Answering a question.** The question is rewritten in English, searched by meaning and by keywords, reranked, and answered by an LLM using only the 8 best passages, with a citation after each fact.
-
-```mermaid
-flowchart LR
-  classDef llm fill:#F3EEF7,stroke:#6B4C8A,color:#13261E
-  classDef srch fill:#EAF2EC,stroke:#1F4D3A,color:#13261E
-  classDef out fill:#FBF3DC,stroke:#C9A227,color:#13261E
-
-  Q["Question in any language<br/>scope: one book or whole library"]:::out --> U["Rewrite (fast LLM)<br/>English query + keywords"]:::llm
-  U --> D["Dense search<br/>multilingual-e5"]:::srch
-  U --> B["Keyword search<br/>BM25"]:::srch
-  D --> F["Fuse (RRF)<br/>top 40"]:::srch
-  B --> F
-  F --> R["Rerank<br/>multilingual cross-encoder → 8"]:::srch
-  R --> A["Answer (Groq, Gemini fallback)<br/>only from the 8 passages, cites [n]"]:::llm
-  A --> O["Answer + 🔊 + source cards<br/>tap [n] → PDF opens at that page"]:::out
-```
+<table>
+<tr>
+<th width="58%">Adding a book</th>
+<th width="42%">Answering a question</th>
+</tr>
+<tr>
+<td align="center" valign="top"><img src="docs/diagrams/09-rag-ingestion.png" width="400" alt="Book ingestion pipeline"></td>
+<td align="center" valign="top"><img src="docs/diagrams/10-rag-question.png" width="280" alt="Question answering pipeline"></td>
+</tr>
+</table>
 
 Each book has its own index, so "Ask this book" can only ever see that book, and adding or hiding a book never touches the others. Full write-up: [`services/agri-rag/docs/HOW-AGRIRAG-WORKS.md`](services/agri-rag/docs/HOW-AGRIRAG-WORKS.md).
 
 ### 4.4 Weather and weekly advice
 
-```mermaid
-flowchart LR
-  classDef src fill:#ffffff,stroke:#8A958C,color:#4A574F,stroke-dasharray:4 3
-  classDef s fill:#EAF2F8,stroke:#2E6DA4,color:#13261E
-  classDef out fill:#F7F4EC,stroke:#1F4D3A,color:#13261E
-
-  OW["OpenWeather<br/>current · 5-day · search · map layers"]:::src --> WX["Weather station :5175"]:::s
-  OM["Open-Meteo<br/>16-day daily forecast (no key)"]:::src --> RULES["Rule engine (API)<br/>IMD rain categories · heat · cold ·<br/>wind gusts · thunderstorm codes"]:::s
-  RULES --> WA["Farm weather alerts<br/>RED / ORANGE / YELLOW, 4 languages"]:::out
-  RULES --> ADV
-  ALERTS["Active pest alerts<br/>reaching the district (BFS)"]:::src --> ADV["Weekly advice<br/>district + season + crops + forecast<br/>(Gemini, cached per day & language)"]:::s
-  ADV --> HOME["'This week in {district}' on Home"]:::out
-  WA --> WX
-  WA --> SMS["Optional SMS<br/>POST /weather/alerts/notify"]:::out
-```
+<p align="center"><img src="docs/diagrams/11-weather-advice.png" width="860" alt="Weather alerts and weekly advice flow"></p>
 
 Alert thresholds follow Indian Meteorological Department rain categories: 35.5 mm (yellow), 64.5 mm (orange) and 115.6 mm (red), plus heat (40 °C / 45 °C), cold (≤ 8 °C) and wind gusts (50 / 70 km/h).
 
@@ -612,7 +381,7 @@ agriqnet-platform/
 ├── demo-photos/          # Sample pest photos + live-demo script
 ├── docs/
 │   ├── demo_assets/      # Screenshots + manifest.json
-│   ├── diagrams/         # Diagram images
+│   ├── diagrams/         # Diagram images, Mermaid sources (src/) and build script
 │   └── images/results/   # Model result figures
 └── .env.example          # Configuration template
 ```

@@ -1,0 +1,17 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+  classDef llm fill:#F3EEF7,stroke:#6B4C8A,color:#13261E
+  classDef srch fill:#EAF2EC,stroke:#1F4D3A,color:#13261E
+  classDef out fill:#FBF3DC,stroke:#C9A227,color:#13261E
+
+  Q["[[chat-circle-text:#A8841B]]<b>Question</b><br/>any language · one book<br/>or whole library"]:::out --> U["[[translate:#6B4C8A]]<b>Rewrite</b><br/>fast LLM → English<br/>query + keywords"]:::llm
+  U --> D["[[graph:#1F4D3A]]<b>Dense search</b><br/>multilingual-e5"]:::srch
+  U --> B["[[text-aa:#1F4D3A]]<b>Keyword search</b><br/>BM25"]:::srch
+  D --> F["[[arrows-merge:#1F4D3A]]<b>Fuse (RRF)</b><br/>top 40"]:::srch
+  B --> F
+  F --> R["[[sort-ascending:#1F4D3A]]<b>Rerank</b><br/>cross-encoder → 8"]:::srch
+  R --> A["[[sparkle:#6B4C8A]]<b>Answer</b><br/>Groq (Gemini fallback)<br/>cites [n] per fact"]:::llm
+  A --> O["[[book-open:#A8841B]]<b>Show</b><br/>answer + Listen + sources<br/>[n] opens the PDF page"]:::out

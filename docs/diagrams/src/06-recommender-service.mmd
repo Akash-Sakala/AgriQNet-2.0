@@ -1,0 +1,12 @@
+flowchart LR
+  classDef q fill:#ECE7FB,stroke:#5B3FD0,color:#13261E
+  classDef s fill:#F7F4EC,stroke:#8A958C,color:#13261E
+  classDef d fill:#FBF0DC,stroke:#C27A1A,color:#13261E
+
+  REQ["[[paper-plane-tilt:#4A574F]]<b>POST /recommend/fertilizer</b><br/>N, P, K (+ temp, humidity,<br/>moisture, soil, crop)"]:::s --> CHK{"all 8 inputs<br/>and mappable?"}:::d
+  CHK -- yes --> M8["[[atom:#5B3FD0]]<b>fert_full8 pipeline</b><br/>6 qubits"]:::q
+  CHK -- no --> M3["[[atom:#5B3FD0]]<b>fert_npk pipeline</b><br/>3 qubits"]:::q
+  M8 --> OUT
+  M3 --> OUT["[[list-numbers:#2A7040]]<b>Answer</b><br/>prediction · top-3 ·<br/>conformal set · model info"]:::s
+  M8 -. "load or self-test failed" .-> LEG["[[clock-counter-clockwise:#C27A1A]]<b>v1 legacy models</b>"]:::d
+  M3 -.-> LEG

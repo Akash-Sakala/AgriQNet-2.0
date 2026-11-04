@@ -1,0 +1,27 @@
+sequenceDiagram
+  autonumber
+  actor F as Farmer
+  participant W as Web app
+  participant A as API gateway
+  participant Y as YOLOv8 :8001
+  participant DB@{ "type": "database" } as MongoDB
+  participant S@{ "type": "queue" } as Twilio SMS
+  actor O as Officer
+  F->>W: Pest photo (camera or gallery)
+  W->>A: POST /api/pest/detect (multipart image)
+  A->>Y: POST /detect
+  Y-->>A: pest, confidence, boxes (top 5)
+  A-->>W: local pest name, host crop, IPM tips (+ AI advice)
+  F->>W: "Yes, warn nearby farmers" + severity
+  W->>A: POST /api/alerts
+  alt confidence ≥ 0.6 or a 2nd farmer reported it within 72 h
+    A->>DB: BFS over district graph → zone per farmer
+    A->>S: SMS in each farmer's language
+    A-->>W: "Warning sent to N farmers in M districts"
+  else needs review
+    A->>DB: Alert PENDING
+    O->>A: Approve & send (or reject)
+    A->>DB: BFS → recipients
+    A->>S: SMS
+  end
+  Note over W,O: Alert Network map polls every 4 s → ripple + toast on the new zone
