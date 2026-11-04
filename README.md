@@ -2,54 +2,142 @@
 
 # 🌱 AgriQNet 2.0
 
-**A multilingual farm assistant with quantum-hybrid crop and fertilizer recommenders, YOLOv8 pest detection, a district-level pest-alert SMS network, a citation-backed farm library (RAG) and agro-weather alerts — all started with one command.**
+### A farm assistant for Karnataka's farmers, with quantum-enhanced crop and fertilizer recommendations
 
-`React + Vite` · `Node/Express gateway` · `FastAPI micro-services` · `MongoDB` · `scikit-learn + NumPy statevector simulator` · `YOLOv8` · `multilingual RAG`
+Recommends the right crop and fertilizer from a soil test · identifies pests from a photo and warns nearby farmers by SMS · answers questions from trusted farm books with page citations · gives district weather alerts — in **ಕನ್ನಡ · हिंदी · తెలుగు · English**.
 
-ಕನ್ನಡ · हिंदी · తెలుగు · English
+`React` · `Node.js / Express` · `FastAPI` · `MongoDB` · `scikit-learn` · `quantum circuit simulation` · `YOLOv8` · `RAG` · `Gemini / Groq`
+
+<img src="docs/demo_assets/03-home-desktop.png" width="820" alt="AgriQNet home screen">
+
+<sub>The farmer's home screen: district weather, pest alerts nearby, and six picture tiles for every feature.</sub>
 
 </div>
 
-<p align="center">
-  <img src="docs/demo_assets/03-home-desktop.png" width="820" alt="AgriQNet home screen on desktop">
-  <br><sub><b>Figure 1.</b> Farmer home: district weather, nearby pest alerts and six picture tiles.</sub>
-</p>
+---
+
+## At a glance
+
+**The problem.** Small farmers rarely get advice that fits *their* soil, *their* district and *their* language. When a new district or crop has only a handful of soil tests, standard machine-learning models also struggle to learn.
+
+**What I built.** A full-stack platform of seven services that starts with one command:
+
+| | Feature | How it works |
+|---|---|---|
+| 🌾 | **Crop & fertilizer recommendations** | Quantum-hybrid models: soil readings are turned into quantum-circuit features, the useful ones are picked by an optimisation step (QUBO), then a classical model decides |
+| 🐛 | **Pest photo → SMS warning** | YOLOv8 names the pest (102 types); a confident report texts farmers in nearby districts, found by a breadth-first search over the district map |
+| 📚 | **Farmer Library** | Retrieval-augmented generation (RAG) over ICAR/UAS books; every answer cites the page it came from |
+| 🌦️ | **Weather & weekly advice** | 16-day forecast turned into farm alerts (heavy rain, heat, wind) and AI advice for the district |
+| 💬 | **Ask anything** | A district-aware assistant with voice input and read-aloud |
+
+**Key results** (classically simulated circuits, measured on farms the models never saw):
+
+- **Fertilizer, 8 inputs:** adding quantum features lifted an SVM from **0.45 to 0.73** macro-F1 with 64 training farms (**+29 points**).
+- **Crop:** both quantum upgrades beat the classical SVM with **2–16 farms per crop** (up to **+3.4 points**).
+- **In the app:** the shipped models score **over 99%** in nested cross-validation and return a calibrated top-3 and a confidence set.
+
+**Engineering highlights**
+
+- **Honest ML evaluation:** a leak-free pipeline, nested cross-validation and corrected statistical tests, with matched classical controls. The README reports where quantum features help *and* where they don't.
+- **Fast, dependency-light inference:** a custom NumPy simulator computes the circuit features in 5–100 ms on a CPU, with no quantum SDK or GPU needed in production.
+- **Safe alerting:** reports are sent automatically only when the photo model is ≥ 60% sure or a second farmer confirms; otherwise an officer reviews them. Demo users are never texted.
+- **Trustworthy answers:** the Farmer Library builds one search index per book, combines meaning-based and keyword search with a reranker, and blocks duplicate and non-farming uploads.
+- **Built for farmers:** language chosen on the first screen, district instead of GPS, picture buttons, read-aloud on every card, and SMS for family members on basic phones.
 
 ---
 
 ## Contents
 
-1. [What AgriQNet does](#1-what-agriqnet-does)
+1. [Product tour](#1-product-tour)
 2. [System architecture](#2-system-architecture)
-3. [How the quantum-hybrid models were trained](#3-how-the-quantum-hybrid-models-were-trained)
-4. [Components and services](#4-components-and-services)
-5. [The web app in screenshots](#5-the-web-app-in-screenshots)
-6. [Set up and run](#6-set-up-and-run)
-7. [Configuration](#7-configuration)
-8. [Repository layout](#8-repository-layout)
-9. [Publish to GitHub](#9-publish-to-github)
+3. [The quantum machine-learning models](#3-the-quantum-machine-learning-models)
+4. [How each service works](#4-how-each-service-works)
+5. [Run it locally](#5-run-it-locally)
+6. [Configuration](#6-configuration)
+7. [Project structure](#7-project-structure)
 
 ---
 
-## 1. What AgriQNet does
+## 1. Product tour
 
-| Farmer need | AgriQNet feature | Powered by |
-|---|---|---|
-| *"Which crop suits my soil?"* | **Which crop?** – soil and weather readings in, crop out, with confidence | AgriQNet v3 quantum-hybrid model (7 simulated qubits) |
-| *"Which fertilizer, how much?"* | **Fertilizer** – N/P/K (or 8 inputs) in, fertilizer out; GenAI plan with dosage | Quantum-hybrid model (3 or 6 qubits) + Gemini |
-| *"What is eating my crop?"* | **Pest photo** – photo → pest name → what to do → warn neighbours | YOLOv8 trained on IP102 (102 pests) |
-| *"Is something coming my way?"* | **Alerts** and the officer's **Alert Network** map, SMS in the farmer's language | District graph + breadth-first search + Twilio |
-| *"Will it rain? Can I spray?"* | **Weather** – district weather, 16-day forecast, rule-based farm alerts | OpenWeather + Open-Meteo |
-| *"What does ICAR say about this?"* | **Farmer Library** – ask one book or the whole shelf; answers cite pages | AgriRAG: hybrid search + reranker + Groq/Gemini |
-| *"Just tell me"* | **Ask** – district-aware chat, voice input and read-aloud | Gemini → Groq fallback, Sarvam TTS |
+**1 · Pick a language, sign in, land on Home**
 
-Designed for farmers first: language picked on the first screen, district instead of GPS, picture buttons with plain words, a **🔊 Listen** button on every card, a phone bottom bar, and SMS for family members on basic phones.
+<table>
+<tr>
+<td align="center" width="25%"><img src="docs/demo_assets/01-language-choice-phone.jpg" width="190"><br><sub>Language is the first choice</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/02-login-phone.jpg" width="190"><br><sub>Phone login + demo accounts</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/04-home-phone.jpg" width="190"><br><sub>Home for the farmer's district</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/06-home-kannada-phone.jpg" width="190"><br><sub>Same screen in Kannada</sub></td>
+</tr>
+</table>
+
+**2 · Get a crop or fertilizer recommendation from the quantum-hybrid models**
+
+<table>
+<tr>
+<td align="center" width="25%"><img src="docs/demo_assets/09-crop-model-inputs-phone.jpg" width="190"><br><sub>Enter soil and weather readings</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/10-crop-result-phone.jpg" width="190"><br><sub>Rice, 99.7% · 7 simulated qubits</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/11-fertilizer-genai-phone.jpg" width="190"><br><sub>Fertilizer calculator</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/12-fertilizer-result-phone.jpg" width="190"><br><sub>Urea · 3 simulated qubits</sub></td>
+</tr>
+</table>
+
+**3 · Photograph a pest, get advice, warn neighbours**
+
+<table>
+<tr>
+<td align="center" width="25%"><img src="docs/demo_assets/14-pest-detected-phone.jpg" width="190"><br><sub>YOLOv8 names the pest</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/15-pest-advice-phone.jpg" width="190"><br><sub>Confidence + what to do now</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/16-pest-warn-severity-phone.jpg" width="190"><br><sub>How bad is it?</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/17-pest-warn-send-phone.jpg" width="190"><br><sub>Which districts get the SMS</sub></td>
+</tr>
+</table>
+
+**4 · Officers watch outbreaks spread on the Alert Network**
+
+<p align="center"><img src="docs/demo_assets/20-alert-network-map-desktop.png" width="760"><br><sub>Red zone where the pest was reported, orange for neighbouring districts, with district details on the right.</sub></p>
+
+**5 · Ask the Farmer Library — answers cite the page**
+
+<table>
+<tr>
+<td align="center" width="50%"><img src="docs/demo_assets/22-farmer-library-desktop.png" width="400"><br><sub>A shelf of ICAR, UAS and TNAU books</sub></td>
+<td align="center" width="50%"><img src="docs/demo_assets/23-library-chat-citations-desktop.png" width="400"><br><sub>An answer from one book, with citation [1]</sub></td>
+</tr>
+</table>
+
+<details>
+<summary><b>More screens</b> — weather, alerts, officer view, assistant</summary>
+
+<table>
+<tr>
+<td align="center" width="50%"><img src="docs/demo_assets/07-weather-station-desktop.png" width="400"><br><sub>Weather station for the district</sub></td>
+<td align="center" width="50%"><img src="docs/demo_assets/08-weather-forecast-desktop.png" width="400"><br><sub>AI farm decisions + 16-day forecast</sub></td>
+</tr>
+<tr>
+<td align="center" width="50%"><img src="docs/demo_assets/21-officer-alert-history-desktop.png" width="400"><br><sub>Officer dashboard and alert history</sub></td>
+<td align="center" width="50%"><img src="docs/demo_assets/24-ask-assistant-desktop.png" width="400"><br><sub>District-aware farming assistant</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center" width="25%"><img src="docs/demo_assets/05-home-tiles-phone.jpg" width="190"><br><sub>Six picture tiles with read-aloud</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/13-pest-photo-start-phone.jpg" width="190"><br><sub>Take or choose a pest photo</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/18-alerts-farmer-phone.jpg" width="190"><br><sub>Alerts for my district</sub></td>
+<td align="center" width="25%"><img src="docs/demo_assets/19-alerts-weather-sms-phone.jpg" width="190"><br><sub>Weather alerts · SMS for basic phones</sub></td>
+</tr>
+</table>
+
+</details>
+
+All screenshots, with titles and captions in story order, are in [`docs/demo_assets/`](docs/demo_assets) ([`manifest.json`](docs/demo_assets/manifest.json)). PNG versions of every diagram below are in [`docs/diagrams/`](docs/diagrams).
 
 ---
 
 ## 2. System architecture
 
-### 2.1 Big picture
+The browser talks to a single **API gateway**. The gateway owns users, alerts and SMS, keeps every API key on the server, and forwards specialist work to three Python services.
 
 ```mermaid
 flowchart TB
@@ -94,19 +182,19 @@ flowchart TB
   style Cloud fill:#FFFFFF,stroke:#DCD4BF,stroke-dasharray:4 3
 ```
 
-| Service | Folder | Port | Tech | Role |
-|---|---|---|---|---|
-| AgriQNet app | `apps/web` | 3000 | React 19, Vite 6, Motion, d3-geo | Farmer + officer UI, Alert Network map |
-| Weather station | `apps/weather` | 5175 | React, Tailwind, Vite | Weather, 16-day forecast, farm alerts |
-| API gateway | `services/api` | 5000 | Node 18+, Express, Mongoose | One front door: auth, OTP, SMS, alerts, AI, proxies |
-| MongoDB | `services/api/src/mongo-server.js` | 27017 | mongodb-memory-server (persistent) | Users, farmers, districts, alerts, SMS log |
-| Pest detector | `services/pest-detector` | 8001 | FastAPI, Ultralytics YOLOv8 | 102-class IP102 pest detection |
-| Recommender | `services/recommender` | 8002 | FastAPI, scikit-learn 1.7.2, NumPy | Quantum-hybrid crop & fertilizer models |
-| Farmer Library | `services/agri-rag` | 8003 | FastAPI, PyMuPDF, multilingual-e5, BM25 | Book ingestion, per-book index, cited answers |
+| Service | Port | Built with | Responsibility |
+|---|---|---|---|
+| AgriQNet app (`apps/web`) | 3000 | React 19, Vite, Motion, d3-geo | Farmer and officer screens, Alert Network map |
+| Weather station (`apps/weather`) | 5175 | React, Tailwind | Weather, 16-day forecast, farm alerts |
+| API gateway (`services/api`) | 5000 | Node.js, Express, Mongoose | Login, OTP, SMS, pest alerts, AI calls, routing |
+| MongoDB | 27017 | Embedded MongoDB 7 | Users, farmers, districts, alerts, SMS log |
+| Pest detector (`services/pest-detector`) | 8001 | FastAPI, YOLOv8 | Identify 102 pest types from a photo |
+| Recommender (`services/recommender`) | 8002 | FastAPI, scikit-learn, NumPy | Quantum-hybrid crop and fertilizer models |
+| Farmer Library (`services/agri-rag`) | 8003 | FastAPI, PyMuPDF, multilingual-e5, BM25 | Add books, search them, answer with citations |
 
-A single launcher (`scripts/launcher.mjs`) installs dependencies on first run, starts the services in order (MongoDB → API → Python services → frontends), waits for their health checks, and stops everything cleanly on **Ctrl+C**.
+A launcher script (`npm start`) installs everything on the first run, starts the services in the right order, waits for each health check, and shuts them all down cleanly on **Ctrl+C**.
 
-### 2.2 One request, end to end
+**Example: what happens when a farmer asks "Which crop?"**
 
 ```mermaid
 sequenceDiagram
@@ -131,7 +219,8 @@ sequenceDiagram
   end
 ```
 
-### 2.3 Data model (MongoDB)
+<details>
+<summary><b>Data model</b> (MongoDB collections)</summary>
 
 ```mermaid
 erDiagram
@@ -180,19 +269,23 @@ erDiagram
   }
 ```
 
-Other collections: `Otp` (hashed, rate-limited codes), `SmsLog` (outbox), `Advice` (weekly district tips cached per day and language), `Counter` (atomic IDs).
+Also stored: one-time passwords (hashed), an SMS outbox, weekly advice cached per district and language, and ID counters.
+
+</details>
 
 ---
 
-## 3. How the quantum-hybrid models were trained
+## 3. The quantum machine-learning models
 
-> This section follows the project presentation *AgriQNet: Hybrid Quantum ML for Farmers*. All circuits are **classically simulated** (3–7 qubits); no quantum computational advantage is claimed.
+> **In one sentence:** small quantum circuits turn each farm's soil readings into new features that capture *combinations* of nutrients, and these features help a classical model most when it has only a few farms to learn from.
+>
+> All circuits are simulated on a normal computer (3–7 qubits). This is a careful benchmark, not a claim that quantum hardware is faster.
 
-### 3.1 The question
+### 3.1 The research question
 
-New districts and new crops start with very few soil tests. AgriQNet asks: **can quantum computing help a classical model pick the right crop or fertilizer from only a handful of farm examples?**
+*Can quantum computing help a classical model pick the right crop or fertilizer from only a handful of farm examples?*
 
-The test is deliberately narrow and fair: take one standard model — the **support vector machine (SVM)** — build two quantum-upgraded versions, give all three exactly the same farms, and score them only on farms they have never seen.
+To keep the test fair, I took one standard model, the **support vector machine (SVM)**, and built two quantum-upgraded versions. All three learn from exactly the same farms and are scored only on farms they have never seen. Any difference therefore comes from the quantum part alone.
 
 | Dataset | Farms | Inputs | Predicts |
 |---|---|---|---|
@@ -200,14 +293,16 @@ The test is deliberately narrow and fair: take one standard model — the **supp
 | Fertilizer · NPK | 99 | N, P, K | 1 of 7 fertilizers |
 | Fertilizer · 8 inputs | 99 | N, P, K, temperature, humidity, moisture, soil type, crop type | 1 of 7 fertilizers |
 
-### 3.2 From soil readings to qubits
+### 3.2 Turning a soil test into quantum features
 
-1. **Scale** each reading to between −1 and +1 (fitted on training farms only).
-2. **Turn** a qubit by that value: `RY(s · x)`. The *bandwidth* `s` controls how strongly a change in the reading turns the qubit (small `s`: farms look alike; large `s`: small differences look big). Values 0.5–2 are explored.
-3. **Link** qubits with CNOT gates in a ring (N → K → P → N), so the state depends on *combinations* of nutrients, not just each one alone.
-4. **Measure** expectation values ⟨X⟩, ⟨Y⟩, ⟨Z⟩ on each qubit and ⟨XX⟩, ⟨YY⟩, ⟨ZZ⟩ on pairs — each average becomes one feature.
+| Step | What happens | Why |
+|---|---|---|
+| **Scale** | Each reading is scaled to between −1 and +1 | A qubit can only be *turned*, so every number must become an angle |
+| **Turn** | `RY(s · x)` rotates one qubit per reading | The strength `s` sets how much a change in the reading matters (0.5–2 were tried) |
+| **Link** | CNOT gates connect the qubits in a ring (N → K → P → N) | The result now depends on *combinations* like N-with-K, not just each nutrient alone |
+| **Measure** | Average values ⟨X⟩, ⟨Y⟩, ⟨Z⟩ per qubit and ⟨XX⟩, ⟨YY⟩, ⟨ZZ⟩ per pair | Each average becomes one new feature |
 
-### 3.3 Two quantum upgrades for the classical SVM
+### 3.3 Two ways to upgrade the SVM
 
 ```mermaid
 flowchart TB
@@ -228,23 +323,20 @@ flowchart TB
   QUBO --> QF["SVM + quantum features<br/>raw readings + selected features"]:::m
 ```
 
-**Upgrade 1 – Q-SVM (quantum similarity).** Every farm passes through the same small circuit and comes out as a quantum *fingerprint*. The SVM judges how alike two farms are by how much their fingerprints overlap (the *kernel matrix*). Only the meaning of "similar" changes; the SVM itself is unchanged.
+- **Upgrade 1 — Q-SVM (a new sense of "similar").** Each farm becomes a quantum *fingerprint*. The SVM treats two farms as alike when their fingerprints overlap, instead of when their numbers are close.
+- **Upgrade 2 — SVM + quantum features (better inputs).** Fifteen fixed circuits, from five designs at several strengths, turn every farm into hundreds of new features: 1,008 for crop, 234 for NPK fertilizer and 765 for 8-input fertilizer.
 
-**Upgrade 2 – SVM + quantum features (better inputs).** A **feature bank** of 15 fixed, never-trained circuits views each farm in different ways:
+| Circuit design | What it does |
+|---|---|
+| Separable | Turns each qubit, no links |
+| Angle + CNOT | Turns, then links neighbours |
+| IQP | Links every pair (N talks directly to K) |
+| Heisenberg | Qubits interact step by step |
+| Re-uploading | Feeds the readings in three times for richer patterns |
 
-| Circuit design | Strengths `s` | What it does |
-|---|---|---|
-| Separable | 0.5, 1, 1.5, 2 | Turns only, no links |
-| Angle + CNOT | 1, 1.5 | Turns, then links neighbours |
-| IQP | 0.5, 1, 1.5 | Links every pair (N with K directly) |
-| Heisenberg | 0.5, 1, 2 | Qubits interact step by step |
-| Re-uploading | 0.5, 1, 1.5 | Readings fed in three times |
+**Choosing features with QUBO.** With only 99 fertilizer farms, hundreds of features would make the model memorise noise. QUBO (quadratic unconstrained binary optimisation) makes a yes/no choice for every feature. It rewards features that point to the right answer and penalises pairs that say the same thing, then keeps 1–8 features for fertilizer or 2–14 for crop. I also tried QAOA, a quantum algorithm built for this kind of problem. It got close (98–99% of the best score) but rarely found the very best set, so a classical solver does the actual picking. The most popular fertilizer feature was an entangled **N-with-K** measurement, chosen in 83% of runs.
 
-That gives **1,008** features per crop farm (7 qubits), **234** per NPK farm (3) and **765** per 8-input farm (6). With only 99 fertilizer farms, using them all would memorise noise, so a **QUBO** (quadratic unconstrained binary optimisation) makes a yes/no choice for each feature that rewards *relevance to the answer* and penalises *pairs that say the same thing* (Mücke et al. relevance–redundancy objective). It keeps 1–8 features for fertilizer and 2–14 for crop.
-
-QAOA, a quantum algorithm for QUBO, was tested too: it came close (approximation ratio 0.98–0.99) but rarely found the exact optimum, so a classical solver (exact search / simulated annealing) does the selection. The most frequently chosen fertilizer feature was an entangled **N-with-K correlator ⟨Y₃Y₄⟩**, picked in 83% of folds.
-
-### 3.4 Training pipeline
+### 3.4 Training and testing
 
 ```mermaid
 flowchart TB
@@ -269,52 +361,43 @@ flowchart TB
   style Row2 fill:none,stroke:none
 ```
 
-- **Circuits stay fixed; only the classical model learns.** Trainable circuits are slow and often get stuck; fixed ones keep the comparison fair.
-- **Nothing leaks.** Scaling, imputation, feature building and QUBO selection all live inside one scikit-learn `Pipeline`, fitted inside each training fold.
-- **Tuning.** Optuna tries 30 (crop) or 40 (fertilizer) combinations — number of features, circuit strength `s`, SVM strictness — scored on inner practice splits.
-- **Statistics.** Nadeau–Bengio corrected t-tests with Holm correction against raw features of the same learner; Wilcoxon/sign tests over paired learning-curve runs.
-- **Full study.** Ran on Modal (parallel CPU containers + GPUs for TabPFN): 861 work units, 52.6 min, 0 failures.
+- **The circuits are fixed; only the classical model learns.** Trainable circuits are slow and often get stuck, and fixed ones keep the comparison fair.
+- **No data leakage.** Scaling, filling missing values, building features and QUBO selection all run inside one scikit-learn pipeline, fitted on training farms only.
+- **Tuning.** Optuna tries 30 (crop) or 40 (fertilizer) settings — the number of features, the circuit strength and how strict the SVM is — scored on inner practice splits.
+- **Statistics.** Differences are checked with corrected t-tests (Holm correction) and paired sign tests.
+- **Scale.** The full study ran on Modal in 53 minutes across 861 parallel jobs, with no failures.
 
-**The few-example test (how the results below were measured).** Pick a few farms at random (for example 2 per crop), train all three SVMs on exactly those farms, test on every farm they did not see, repeat 20 times (crop) or 40 times (fertilizer), average, then add more farms. All settings were fixed in advance so no SVM gets an unfair edge.
+**The few-example test.** Pick a few farms at random (for example 2 per crop), train all three SVMs on exactly those farms and test on every other farm. Repeat 20 times (crop) or 40 times (fertilizer), average the scores, then add more farms. All settings were fixed in advance.
 
 ### 3.5 Results
 
-<p align="center">
-  <img src="docs/images/results/results-1-edge-qsvm.png" width="860" alt="Crop learning curves: Q-SVM and SVM with quantum features beat the classical SVM from 2 to 16 farms per crop">
-  <br><sub><b>Figure 2.</b> Crop: both quantum upgrades beat the classical SVM when farms are few (2–16 per crop); all meet near 98% at 32 per crop.</sub>
-</p>
+<p align="center"><img src="docs/images/results/results-1-edge-qsvm.png" width="840" alt="Crop learning curves"><br><sub><b>Crop.</b> Both quantum upgrades beat the classical SVM with 2–16 farms per crop. With 1 farm per crop the Q-SVM is best, and by 32 per crop all three reach about 98%.</sub></p>
 
-<p align="center">
-  <img src="docs/images/results/results-2-edge-qubo.png" width="860" alt="Fertilizer 8-input learning curves: SVM with quantum features reaches 0.73 macro-F1 versus 0.45 for the classical SVM">
-  <br><sub><b>Figure 3.</b> Fertilizer (8 inputs): QUBO-selected quantum features lift the SVM from 0.45 to 0.73 macro-F1 at 64 farms (+28.6 points).</sub>
-</p>
+<p align="center"><img src="docs/images/results/results-2-edge-qubo.png" width="840" alt="Fertilizer learning curves"><br><sub><b>Fertilizer (8 inputs).</b> Quantum features lift the SVM from 0.45 to 0.73 macro-F1 at 64 farms. Weather, soil type and crop type drown out the nutrients for a plain SVM; nutrient-based quantum features bring the focus back.</sub></p>
 
-<p align="center">
-  <img src="docs/images/results/results-3-verdict.png" width="860" alt="Takeaway: quantum upgraded the classical SVM on 2 of 3 datasets">
-  <br><sub><b>Figure 4.</b> Takeaway: quantum upgrades help on 2 of 3 datasets, and only when examples are few.</sub>
-</p>
+<p align="center"><img src="docs/images/results/results-3-verdict.png" width="840" alt="Takeaway"><br><sub><b>Takeaway.</b> Quantum upgrades helped on 2 of 3 datasets, and only when examples were few. On the simple NPK data the classical SVM was already near-perfect.</sub></p>
 
-**Why it works:** the circuits give the SVM a richer sense of which farms are alike, including combinations such as N with K. On the 8-input fertilizer data, weather, soil type and crop type say little about the right bag and drown out the nutrients for a distance-based SVM; nutrient-derived quantum features put the focus back. **When it matters:** with few examples. With plenty of data the classical model catches up.
+**What the results do *not* show.** With all the data available, no quantum version was significantly better than the same model on raw readings (21 comparisons). Circuits *without* entanglement did as well as entangled ones. The value comes from a well-designed, smooth way of encoding the readings, and that can be simulated classically.
 
-**Honest scope (full-data nested CV):** at full data no quantum arm was significantly better than raw features of the same learner (21 comparisons, all non-significant), and separable (no-entanglement) circuits did as well as or better than entangled ones — the useful ingredient is the structured, bandwidth-limited trigonometric encoding, which is classically simulable.
+### 3.6 Models running in the app
 
-### 3.6 What the app actually serves
+For each task, the app serves the best quantum-hybrid pipeline from the full study. These match the best classical models (over 99%) and add calibrated confidence:
 
-The platform ships the best **quantum-hybrid** pipeline from the full-budget study for each task (non-inferior to the best classical model, 99.5–100% out of fold):
-
-| Task | Served model | Qubits | Nested-CV result |
+| Task | Model in production | Qubits | Cross-validated score |
 |---|---|---|---|
-| Crop (`models/v3/crop`) | Gaussian NB on the 7 readings + QUBO-selected circuit features | 7 | accuracy 99.41%, log-loss 0.0165 |
-| Fertilizer NPK (`models/v3/fert_npk`) | Soft vote: SVM + quantum features, quantum fidelity-kernel SVM (IQP), ExtraTrees + quantum features | 3 | macro-F1 0.993 |
-| Fertilizer 8 inputs (`models/v3/fert_full8`) | ExtraTrees + QUBO-selected features incl. ⟨Y₃Y₄⟩ | 6 | macro-F1 0.995 |
+| Crop | Gaussian Naive Bayes on 7 readings + selected circuit features | 7 | 99.41% accuracy |
+| Fertilizer (N, P, K) | Vote of SVM + quantum features, quantum-kernel SVM and ExtraTrees | 3 | 0.993 macro-F1 |
+| Fertilizer (8 inputs) | ExtraTrees + selected circuit features (incl. N-with-K) | 6 | 0.995 macro-F1 |
 
-Every response carries a calibrated **top-3**, a **90% conformal set** and the model ID. At start-up each model re-predicts a stored sample and must match to within 1e-6, otherwise the service falls back to the v1 models and reports it on `/health`.
+Every answer includes the **top-3 options with probabilities** and a **90% confidence set**. At start-up each model re-checks a saved sample prediction, and the service falls back to the original models if the check fails.
 
 ---
 
-## 4. Components and services
+## 4. How each service works
 
-### 4.1 Recommender service (`:8002`)
+### 4.1 Recommender
+
+Picks the 8-input fertilizer model when all inputs are present, and otherwise uses the N/P/K model. The circuits run on a small NumPy simulator bundled with the service, so a prediction takes 5–100 ms on a CPU.
 
 ```mermaid
 flowchart LR
@@ -331,9 +414,9 @@ flowchart LR
   M3 -.-> LEG
 ```
 
-Inside each pipeline: imputer → scaler → **NumPy statevector simulator** (bundled `agriqnet` package, exact expectation values, 5–100 ms per request) → selected quantum columns → classifier → temperature calibration → conformal set. No PennyLane, GPU or PyTorch is needed at inference. App soil names map to the training categories (e.g. *Red Soil → Red*, *ragi → Millets*).
+### 4.2 Pest detection and the alert network
 
-### 4.2 Pest detection and the pest-alert network
+A farmer's photo goes to YOLOv8. If the farmer chooses to warn others, the server decides whether to send at once or wait for an officer.
 
 ```mermaid
 sequenceDiagram
@@ -365,7 +448,7 @@ sequenceDiagram
   Note over W,O: Alert Network map polls every 4 s → ripple + toast on the new zone
 ```
 
-**Zones by graph distance.** The 31 Karnataka districts and 71 borders form a graph. Severity sets how far the warning spreads; hop distance sets each farmer's zone.
+**Who gets the SMS?** The 31 Karnataka districts and their 71 borders form a graph. A breadth-first search from the reported district finds everyone in range, and each farmer is placed in a zone by distance:
 
 ```mermaid
 flowchart LR
@@ -376,15 +459,17 @@ flowchart LR
   R0 --- O2["Neighbour<br/>1 hop → ORANGE"]:::orange
 ```
 
-| Severity chosen | Spread (BFS depth) | Who is texted |
-|---|---|---|
-| 🔴 Very bad | 2 hops | Reported district, neighbours and their neighbours |
-| 🟠 Spreading | 1 hop | Reported district and neighbours |
-| 🟡 A few pests | 0 hops | Reported district only |
+| Severity chosen by the farmer | How far it spreads |
+|---|---|
+| 🔴 Very bad | The district, its neighbours and their neighbours |
+| 🟠 Spreading | The district and its neighbours |
+| 🟡 A few pests | The district only |
 
-Seeded demo farmers are flagged `isDemo` and are never texted; `SMS_MODE=simulate` records messages without sending. Only officers can approve, reject or cancel alerts and see phone numbers.
+Each farmer gets the SMS in their own language. Only officers can approve, reject or cancel alerts, or see phone numbers.
 
-### 4.3 Farmer Library — AgriRAG (`:8003`)
+### 4.3 Farmer Library (RAG)
+
+**Adding a book.** Uploads are checked for duplicates (same file, same text or a near-copy), read page by page (old Kannada fonts are converted to Unicode), checked to be about farming, then indexed.
 
 ```mermaid
 flowchart TB
@@ -403,6 +488,8 @@ flowchart TB
   IX --> CV["Cover"]:::step --> OK["Ready on the shelf"]:::done
 ```
 
+**Answering a question.** The question is rewritten in English, searched by meaning and by keywords, reranked, and answered by an LLM using only the 8 best passages, with a citation after each fact.
+
 ```mermaid
 flowchart LR
   classDef llm fill:#F3EEF7,stroke:#6B4C8A,color:#13261E
@@ -419,9 +506,9 @@ flowchart LR
   A --> O["Answer + 🔊 + source cards<br/>tap [n] → PDF opens at that page"]:::out
 ```
 
-Why one index per book: *Ask this book* can only ever see that book, hiding or adding a book never rewrites another index, and a laptop-sized library fits in memory for exact search. More detail: [`services/agri-rag/docs/HOW-AGRIRAG-WORKS.md`](services/agri-rag/docs/HOW-AGRIRAG-WORKS.md).
+Each book has its own index, so "Ask this book" can only ever see that book, and adding or hiding a book never touches the others. Full write-up: [`services/agri-rag/docs/HOW-AGRIRAG-WORKS.md`](services/agri-rag/docs/HOW-AGRIRAG-WORKS.md).
 
-### 4.4 Weather service and weekly district advice
+### 4.4 Weather and weekly advice
 
 ```mermaid
 flowchart LR
@@ -439,119 +526,40 @@ flowchart LR
   WA --> SMS["Optional SMS<br/>POST /weather/alerts/notify"]:::out
 ```
 
-Thresholds: rain ≥ 35.5 mm (yellow), ≥ 64.5 mm (orange), ≥ 115.6 mm (red); max temperature ≥ 40 °C (orange), ≥ 45 °C (red); min ≤ 8 °C; gusts ≥ 50 / ≥ 70 km/h.
+Alert thresholds follow Indian Meteorological Department rain categories: 35.5 mm (yellow), 64.5 mm (orange) and 115.6 mm (red), plus heat (40 °C / 45 °C), cold (≤ 8 °C) and wind gusts (50 / 70 km/h).
 
-### 4.5 API gateway (`:5000`)
+<details>
+<summary><b>API reference</b> (gateway, <code>http://localhost:5000/api</code>)</summary>
 
 | Area | Endpoints |
 |---|---|
-| Accounts | `POST /auth/check-user`, `/auth/register`, `/auth/login` · `PUT /auth/profile` (bcrypt passwords, signed tokens) |
+| Accounts | `POST /auth/register`, `/auth/login`, `/auth/check-user` · `PUT /auth/profile` |
 | OTP & SMS | `POST /otp/send`, `/otp/verify`, `/sms/send` · `GET /sms/log`, `/sms/status` |
-| Pest alerts | `GET/POST /districts`, `/districts/edges`, `/farmers`, `/alerts`, `/subscriptions`, `/pests` · officer: `POST /alerts/:id/approve`, `/alerts/:id/reject`, `PUT /alerts/:id/cancel` |
-| Detection | `POST /pest/detect` (multipart `image`; `?fallback=gemini`) |
-| Recommenders | `POST /recommend/crop`, `/recommend/fertilizer` |
-| Farmer Library | `GET /library/books`, `POST /library/upload`, `/library/url`, `/library/chat` |
-| Weather | `GET /weather/now`, `/weather/forecast`, `/weather/alerts` · `POST /weather/alerts/notify` |
-| Helpers | `GET /advice`, `POST /ai/translate`, `POST /tts`, `POST /ai/*` (Gemini → Groq) |
-| Health | `GET /health` (or `npm run status`) |
+| Pest alerts | `GET/POST /alerts`, `/districts`, `/farmers`, `/subscriptions`, `/pests` · officer: `POST /alerts/:id/approve`, `/alerts/:id/reject`, `PUT /alerts/:id/cancel` |
+| Detection | `POST /pest/detect` (multipart `image`) |
+| Recommendations | `POST /recommend/crop`, `/recommend/fertilizer` |
+| Farmer Library | `GET /library/books` · `POST /library/upload`, `/library/url`, `/library/chat` |
+| Weather & advice | `GET /weather/now`, `/weather/forecast`, `/weather/alerts`, `/advice` |
+| AI helpers | `POST /ai/chat`, `/ai/crops`, `/ai/fertilizer`, `/ai/translate`, `/tts` |
+| Health | `GET /health` |
 
-All AI keys stay on the server; the browser never sees them.
-
----
-
-## 5. The web app in screenshots
-
-Captured from the running app at `http://localhost:3000`. The images, their titles and captions are in [`docs/demo_assets/`](docs/demo_assets) with a [`manifest.json`](docs/demo_assets/manifest.json) in story order, ready to reuse as demo-video scenes; PNG renders of every diagram in this README are in [`docs/diagrams/`](docs/diagrams).
-
-### Getting started
-
-<table>
-<tr>
-<td align="center" width="25%"><img src="docs/demo_assets/01-language-choice-phone.jpg" width="200"><br><sub><b>Fig. 5</b> Choose your language</sub></td>
-<td align="center" width="25%"><img src="docs/demo_assets/02-login-phone.jpg" width="200"><br><sub><b>Fig. 6</b> Login and demo accounts</sub></td>
-<td align="center" width="25%"><img src="docs/demo_assets/04-home-phone.jpg" width="200"><br><sub><b>Fig. 7</b> Farmer home (phone)</sub></td>
-<td align="center" width="25%"><img src="docs/demo_assets/06-home-kannada-phone.jpg" width="200"><br><sub><b>Fig. 8</b> Instant switch to Kannada</sub></td>
-</tr>
-</table>
-
-### Crop and fertilizer recommenders (quantum-hybrid)
-
-<table>
-<tr>
-<td align="center" width="25%"><img src="docs/demo_assets/09-crop-model-inputs-phone.jpg" width="200"><br><sub><b>Fig. 9</b> Crop model inputs</sub></td>
-<td align="center" width="25%"><img src="docs/demo_assets/10-crop-result-phone.jpg" width="200"><br><sub><b>Fig. 10</b> Rice · 99.7% · 7 simulated qubits</sub></td>
-<td align="center" width="25%"><img src="docs/demo_assets/11-fertilizer-genai-phone.jpg" width="200"><br><sub><b>Fig. 11</b> Fertilizer calculator</sub></td>
-<td align="center" width="25%"><img src="docs/demo_assets/12-fertilizer-result-phone.jpg" width="200"><br><sub><b>Fig. 12</b> Urea · 3 simulated qubits</sub></td>
-</tr>
-</table>
-
-### Pest photo → warning
-
-<table>
-<tr>
-<td align="center" width="20%"><img src="docs/demo_assets/13-pest-photo-start-phone.jpg" width="170"><br><sub><b>Fig. 13</b> Take or choose a photo</sub></td>
-<td align="center" width="20%"><img src="docs/demo_assets/14-pest-detected-phone.jpg" width="170"><br><sub><b>Fig. 14</b> YOLOv8 names the pest</sub></td>
-<td align="center" width="20%"><img src="docs/demo_assets/15-pest-advice-phone.jpg" width="170"><br><sub><b>Fig. 15</b> What to do now</sub></td>
-<td align="center" width="20%"><img src="docs/demo_assets/16-pest-warn-severity-phone.jpg" width="170"><br><sub><b>Fig. 16</b> How bad is it?</sub></td>
-<td align="center" width="20%"><img src="docs/demo_assets/17-pest-warn-send-phone.jpg" width="170"><br><sub><b>Fig. 17</b> Districts that get the SMS</sub></td>
-</tr>
-</table>
-
-### Alerts and the Alert Network
-
-<table>
-<tr>
-<td align="center" width="25%"><img src="docs/demo_assets/18-alerts-farmer-phone.jpg" width="200"><br><sub><b>Fig. 18</b> Alerts for my district</sub></td>
-<td align="center" width="25%"><img src="docs/demo_assets/19-alerts-weather-sms-phone.jpg" width="200"><br><sub><b>Fig. 19</b> Weather alerts · SMS for basic phones</sub></td>
-<td align="center" width="50%"><img src="docs/demo_assets/20-alert-network-map-desktop.png" width="420"><br><sub><b>Fig. 20</b> Alert Network: red/orange zones around an outbreak</sub></td>
-</tr>
-</table>
-
-<p align="center"><img src="docs/demo_assets/21-officer-alert-history-desktop.png" width="700"><br><sub><b>Fig. 21</b> Officer view: districts, registered farmers, active alerts and history</sub></p>
-
-### Weather
-
-<table>
-<tr>
-<td align="center" width="50%"><img src="docs/demo_assets/07-weather-station-desktop.png" width="420"><br><sub><b>Fig. 22</b> Weather station for the farmer's district</sub></td>
-<td align="center" width="50%"><img src="docs/demo_assets/08-weather-forecast-desktop.png" width="420"><br><sub><b>Fig. 23</b> AI farm decisions + 16-day forecast</sub></td>
-</tr>
-</table>
-
-### Farmer Library and Ask
-
-<table>
-<tr>
-<td align="center" width="50%"><img src="docs/demo_assets/22-farmer-library-desktop.png" width="420"><br><sub><b>Fig. 24</b> Farmer Library shelf</sub></td>
-<td align="center" width="50%"><img src="docs/demo_assets/23-library-chat-citations-desktop.png" width="420"><br><sub><b>Fig. 25</b> Ask a book — answers cite pages</sub></td>
-</tr>
-<tr>
-<td align="center" width="50%"><img src="docs/demo_assets/24-ask-assistant-desktop.png" width="420"><br><sub><b>Fig. 26</b> Ask anything (district-aware assistant)</sub></td>
-<td align="center" width="50%"><img src="docs/demo_assets/05-home-tiles-phone.jpg" width="200"><br><sub><b>Fig. 27</b> Six picture tiles with read-aloud</sub></td>
-</tr>
-</table>
+</details>
 
 ---
 
-## 6. Set up and run
+## 5. Run it locally
 
-**Prerequisites:** Node.js ≥ 18.17 (LTS), Python 3.10–3.13, Git, about 3 GB free disk. MongoDB, PyTorch and the models are installed by the launcher.
+**You need:** Node.js 18.17 or newer, Python 3.10–3.13 and about 3 GB of free disk. MongoDB, PyTorch and the models are installed for you.
 
 ```bash
-# 1. Get the code
 git clone https://github.com/Akash-Sakala/AgriQNet-2.0.git
 cd AgriQNet-2.0
-
-# 2. Configure (the launcher also creates .env from .env.example on first run)
-cp .env.example .env            # Windows PowerShell: Copy-Item .env.example .env
-#    then add GEMINI_API_KEY, GROQ_API_KEY and VITE_OPENWEATHER_API_KEY (see §7)
-
-# 3. Install everything and start all services
-npm start                       # first run ≈ 10–15 min (npm, Python venv, PyTorch CPU, models)
-
-# 4. Open the app
-#    http://localhost:3000   → choose a language → "Try demo" or "Officer demo"
+cp .env.example .env       # Windows PowerShell: Copy-Item .env.example .env
+                           # then add your API keys (see Configuration)
+npm start                  # first run installs everything (≈10–15 min), then starts all services
 ```
+
+Open **http://localhost:3000**, pick a language, and press **Try demo** (farmer) or **Officer demo**.
 
 | Demo account | Phone | Password |
 |---|---|---|
@@ -559,115 +567,70 @@ npm start                       # first run ≈ 10–15 min (npm, Python venv, P
 | Agriculture officer | `+91 0000000001` | `officer123` |
 | Second farmer, Lakshmi | `+91 0000000002` | `demo1234` |
 
-Everyday commands:
+| Command | What it does |
+|---|---|
+| `npm start` | Install if needed, then start everything |
+| `npm run demo` | Start with clean demo data and no pest alerts (for a live demo) |
+| `npm run reseed` | Reset the demo data, including sample alerts |
+| `npm run status` | Show the health of every service |
+| `npm start -- --only=api,web` | Start only some services |
+| `npm run build` | Production build of both frontends |
 
-```bash
-npm start                         # set up if needed, then start everything
-npm start -- --open               # …and open the browser
-npm start -- --only=api,web       # start only some services (MongoDB is added automatically)
-npm start -- --skip=rag,weather   # start everything except some services
-npm run demo                      # clean demo data with zero pest alerts (live demo)
-npm run demo:reset                # reset demo data while running
-npm run reseed                    # wipe and reseed demo data (with sample alerts), then start
-npm run status                    # health of every service
-npm run build                     # production builds of both frontends
-npm run i18n && npm run i18n:check   # fill / verify Hindi, Kannada, Telugu strings
-```
-
-Live-demo script (an outbreak filling the Karnataka map): [`demo-photos/README.md`](demo-photos/README.md). Twilio trial setup and translation workflow: [`docs/platform-notes.md`](docs/platform-notes.md).
-
-Press **Ctrl+C** once to stop everything; MongoDB shuts down cleanly and data is kept. Runtime files (venv, MongoDB data, logs, Farmer Library) live outside the repo in `%LOCALAPPDATA%\AgriQNet` (Windows) or `~/.agriqnet` (macOS/Linux); override with `AGRIQNET_HOME`.
+Press **Ctrl+C** once to stop everything; your data is kept. A step-by-step live-demo script is in [`demo-photos/README.md`](demo-photos/README.md), and older detailed notes (Twilio trial setup, translations) are in [`docs/platform-notes.md`](docs/platform-notes.md).
 
 <details>
 <summary><b>Troubleshooting</b></summary>
 
-- **Port already in use** — an old copy is still running; close it or change the port in `.env`.
-- **First start is slow** — the Python services download PyTorch, YOLO and the embedding models once.
-- **Logs** — `%LOCALAPPDATA%\AgriQNet\logs\<service>.log`.
-- **Fresh database** — stop, delete `%LOCALAPPDATA%\AgriQNet\mongo-data`, `npm start`.
-- **Reinstall Python packages** — delete `%LOCALAPPDATA%\AgriQNet\venv`, `npm start`.
-- **Slow book processing** — set `RAG_EMBED_MODEL=intfloat/multilingual-e5-small`.
-- **Gemini free tier exhausted** — the API falls back to other Gemini models, then Groq (text features).
+- **"Port already in use"** — another copy is running; close it or change the port in `.env`.
+- **The first start is slow** — PyTorch, YOLO and the search models download once.
+- **Logs** — `%LOCALAPPDATA%\AgriQNet\logs` on Windows, `~/.agriqnet/logs` elsewhere.
+- **Start with a fresh database** — stop the app, delete the `mongo-data` folder next to the logs, run `npm start`.
+- **Books process slowly** — set `RAG_EMBED_MODEL=intfloat/multilingual-e5-small` in `.env`.
 
 </details>
 
 ---
 
-## 7. Configuration
+## 6. Configuration
 
-One `.env` at the repository root configures every service (template: `.env.example`). **Never commit `.env`** — it is in `.gitignore`.
+Everything is configured in one `.env` file at the project root (template: `.env.example`). Never commit `.env`.
 
-| Key | Needed for |
-|---|---|
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | Ask, GenAI crop/fertilizer plans, pest advice, weekly advice, translation |
-| `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_FAST_MODEL` | Farmer Library answers and query rewriting (Gemini fallback) |
-| `VITE_OPENWEATHER_API_KEY` | Weather station current weather, 5-day forecast, search, map layers |
-| `SMS_MODE` (`auto` / `simulate`), `TWILIO_*` | OTP and pest/weather SMS (a Twilio trial texts verified numbers only) |
-| `SARVAM_API_KEY` | Natural Kannada/Telugu/Hindi read-aloud when the device has no voice |
-| `AUTO_ALERT_CONFIDENCE` (0.6) | Photo confidence needed to send a farmer's report without an officer |
-| `RECOMMENDER_MODELS` (`v3` / `legacy`) | Quantum-hybrid v3 models (default) or the original v1 models |
-| `RAG_EMBED_MODEL`, `RAG_RERANK_MODEL`, `HF_TOKEN`, `LIBRARY_*` | Farmer Library models, covers, autoseed and crawl schedule |
-| `MONGO_URI` | Leave empty for the embedded MongoDB, or point to Atlas/your server |
-| `*_PORT`, `AGRIQNET_HOME` | Ports and the runtime folder |
+| Setting | Used for | Required? |
+|---|---|---|
+| `GEMINI_API_KEY` | Assistant, GenAI plans, pest advice, weekly advice, translation | Recommended |
+| `GROQ_API_KEY` | Farmer Library answers (Gemini is the fallback) | Recommended |
+| `VITE_OPENWEATHER_API_KEY` | Current weather and 5-day forecast | Recommended |
+| `SMS_MODE`, `TWILIO_*` | OTP and alert SMS; `simulate` records messages without sending | Optional |
+| `SARVAM_API_KEY` | Natural Kannada/Telugu/Hindi read-aloud | Optional |
+| `AUTO_ALERT_CONFIDENCE` | How sure the photo model must be to send without an officer (default 0.6) | Optional |
+| `RECOMMENDER_MODELS` | `v3` quantum-hybrid models (default) or `legacy` | Optional |
+| `MONGO_URI` | Leave empty for the built-in database | Optional |
+
+Without any keys, the recommenders, pest detection, alerts and maps still work; only the AI-written text features need keys.
 
 ---
 
-## 8. Repository layout
+## 7. Project structure
 
 ```
 agriqnet-platform/
 ├── apps/
-│   ├── web/                 # AgriQNet app (React + Vite) — farmer & officer UI, Alert Network
-│   ├── weather/             # Weather station (React + Tailwind)
-│   └── pest-dashboard/      # legacy dashboard (replaced by Alert Network; not started)
+│   ├── web/              # Main app: farmer & officer screens, Alert Network map
+│   └── weather/          # Weather station
 ├── services/
-│   ├── api/                 # Express gateway, Mongo models, seed data, i18n, alert engine
-│   ├── pest-detector/       # FastAPI + YOLOv8 (best.pt, IP102)
-│   ├── recommender/         # FastAPI + quantum-hybrid v3 models + bundled `agriqnet` simulator
-│   ├── agri-rag/            # Farmer Library (AgriRAG) + docs/HOW-AGRIRAG-WORKS.md
-│   └── requirements.txt     # shared Python requirements
-├── scripts/                 # launcher, status check, i18n translator
-├── demo-photos/             # sample pest photos + live-demo script
+│   ├── api/              # Gateway: accounts, alerts, SMS, AI, database models, seed data
+│   ├── recommender/      # Quantum-hybrid models + NumPy circuit simulator
+│   ├── pest-detector/    # YOLOv8 pest model
+│   └── agri-rag/         # Farmer Library (RAG)
+├── scripts/              # One-command launcher, health check, translation tool
+├── demo-photos/          # Sample pest photos + live-demo script
 ├── docs/
-│   ├── images/results/      # model result figures
-│   ├── diagrams/            # PNG renders of the Mermaid diagrams in this README
-│   ├── demo_assets/         # app screenshots + manifest.json (video scenes)
-│   └── platform-notes.md    # previous detailed platform notes (live-demo script, Twilio, i18n)
-├── .env.example
-└── package.json             # npm start / demo / status / build
+│   ├── demo_assets/      # Screenshots + manifest.json
+│   ├── diagrams/         # Diagram images
+│   └── images/results/   # Model result figures
+└── .env.example          # Configuration template
 ```
 
 ---
 
-## 9. Publish to GitHub
-
-Run these from the project folder (PowerShell or Git Bash). The remote repository `Akash-Sakala/AgriQNet-2.0` should already exist on GitHub and be empty.
-
-```bash
-# 1. Go to the project
-cd "C:\Users\akash\OneDrive\Desktop\capstone\Final_Components\agriqnet-platform"
-
-# 2. (optional) keep the stray root PDF out of the repo — it duplicates library-sources/
-Add-Content .gitignore "ANNUAL HIGHLIGHTS 2025-26.pdf"     # Git Bash: echo "ANNUAL HIGHLIGHTS 2025-26.pdf" >> .gitignore
-
-# 3. Create the repository on the main branch
-git init
-git branch -M main
-
-# 4. Stage everything, then check that .env, node_modules/ and library-sources/ are NOT listed
-git add .
-git status
-
-# 5. Commit
-git commit -m "AgriQNet 2.0: platform, quantum-hybrid recommenders, docs and demo assets"
-
-# 6. Connect the GitHub remote and push
-git remote add origin https://github.com/Akash-Sakala/AgriQNet-2.0.git
-git push -u origin main
-```
-
-If `git commit` asks who you are, set it once with `git config --global user.name "Akash Sakala"` and `git config --global user.email "<your GitHub email>"`. If the remote already has a README or licence, run `git pull --rebase origin main` before pushing. The YOLO weights (`services/pest-detector/best.pt`, ~37 MB) are under GitHub's 100 MB file limit, so no Git LFS is needed.
-
----
-
-<sub>AgriQNet 2.0 · B.E. AI & ML capstone, BMS College of Engineering, Bengaluru. Quantum circuits are simulated classically; results are a benchmark, not a quantum-advantage claim.</sub>
+<div align="center"><sub>AgriQNet 2.0 · B.E. capstone project in AI & Machine Learning, BMS College of Engineering, Bengaluru</sub></div>
