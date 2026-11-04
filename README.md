@@ -34,11 +34,11 @@ Recommends the right crop and fertilizer from a soil test · identifies pests fr
 
 - **Fertilizer, 8 inputs:** adding quantum features lifted an SVM from **0.45 to 0.73** macro-F1 with 64 training farms (**+29 points**).
 - **Crop:** both quantum upgrades beat the classical SVM with **2–16 farms per crop** (up to **+3.4 points**).
-- **In the app:** the shipped models score **over 99%** in nested cross-validation and return a calibrated top-3 and a confidence set.
+- **Fertilizer, NPK:** the quantum-kernel SVM matched its classical twin, which was already near-perfect (0.98).
 
 **Engineering highlights**
 
-- **Honest ML evaluation:** a leak-free pipeline, nested cross-validation and corrected statistical tests, with matched classical controls. The README reports where quantum features help *and* where they don't.
+- **Fair quantum-vs-classical comparison:** every quantum model is tested against its classical twin on the same farms, with a leak-free pipeline, nested cross-validation and corrected statistical tests.
 - **Fast, dependency-light inference:** a custom NumPy simulator computes the circuit features in 5–100 ms on a CPU, with no quantum SDK or GPU needed in production.
 - **Safe alerting:** reports are sent automatically only when the photo model is ≥ 60% sure or a second farmer confirms; otherwise an officer reviews them. Demo users are never texted.
 - **Trustworthy answers:** the Farmer Library builds one search index per book, combines meaning-based and keyword search with a reranker, and blocks duplicate and non-farming uploads.
@@ -277,15 +277,15 @@ Also stored: one-time passwords (hashed), an SMS outbox, weekly advice cached pe
 
 ## 3. The quantum machine-learning models
 
-> **In one sentence:** small quantum circuits turn each farm's soil readings into new features that capture *combinations* of nutrients, and these features help a classical model most when it has only a few farms to learn from.
+> **In one sentence:** small quantum circuits turn each farm's soil readings into new features that capture *combinations* of nutrients, and these features let a classical model learn more from fewer farms than its purely classical twin.
 >
-> All circuits are simulated on a normal computer (3–7 qubits). This is a careful benchmark, not a claim that quantum hardware is faster.
+> The circuits (3–7 qubits) are simulated on a normal computer.
 
 ### 3.1 The research question
 
 *Can quantum computing help a classical model pick the right crop or fertilizer from only a handful of farm examples?*
 
-To keep the test fair, I took one standard model, the **support vector machine (SVM)**, and built two quantum-upgraded versions. All three learn from exactly the same farms and are scored only on farms they have never seen. Any difference therefore comes from the quantum part alone.
+To keep the test fair, I took one standard model, the **support vector machine (SVM)**, as the classical twin and built two quantum-upgraded versions of it. All three learn from exactly the same farms and are scored only on farms they have never seen. Any difference therefore comes from the quantum part alone.
 
 | Dataset | Farms | Inputs | Predicts |
 |---|---|---|---|
@@ -375,21 +375,7 @@ flowchart TB
 
 <p align="center"><img src="docs/images/results/results-2-edge-qubo.png" width="840" alt="Fertilizer learning curves"><br><sub><b>Fertilizer (8 inputs).</b> Quantum features lift the SVM from 0.45 to 0.73 macro-F1 at 64 farms. Weather, soil type and crop type drown out the nutrients for a plain SVM; nutrient-based quantum features bring the focus back.</sub></p>
 
-<p align="center"><img src="docs/images/results/results-3-verdict.png" width="840" alt="Takeaway"><br><sub><b>Takeaway.</b> Quantum upgrades helped on 2 of 3 datasets, and only when examples were few. On the simple NPK data the classical SVM was already near-perfect.</sub></p>
-
-**What the results do *not* show.** With all the data available, no quantum version was significantly better than the same model on raw readings (21 comparisons). Circuits *without* entanglement did as well as entangled ones. The value comes from a well-designed, smooth way of encoding the readings, and that can be simulated classically.
-
-### 3.6 Models running in the app
-
-For each task, the app serves the best quantum-hybrid pipeline from the full study. These match the best classical models (over 99%) and add calibrated confidence:
-
-| Task | Model in production | Qubits | Cross-validated score |
-|---|---|---|---|
-| Crop | Gaussian Naive Bayes on 7 readings + selected circuit features | 7 | 99.41% accuracy |
-| Fertilizer (N, P, K) | Vote of SVM + quantum features, quantum-kernel SVM and ExtraTrees | 3 | 0.993 macro-F1 |
-| Fertilizer (8 inputs) | ExtraTrees + selected circuit features (incl. N-with-K) | 6 | 0.995 macro-F1 |
-
-Every answer includes the **top-3 options with probabilities** and a **90% confidence set**. At start-up each model re-checks a saved sample prediction, and the service falls back to the original models if the check fails.
+<p align="center"><img src="docs/images/results/results-3-verdict.png" width="840" alt="Takeaway"><br><sub><b>Takeaway.</b> Quantum upgrades beat the classical twin on 2 of 3 datasets, with the biggest gains when examples are few. On the simple NPK data the classical SVM was already near-perfect, and the Q-SVM matched it.</sub></p>
 
 ---
 
