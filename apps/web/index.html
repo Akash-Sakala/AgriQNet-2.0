@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgriQNet - Smart Farming</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // AgriQNet design tokens — "earthy premium": forest green on warm cream, harvest-gold accent.
+      // `agri` is the forest-green scale used by every component; `gray` is re-tuned to warm neutrals.
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              agri: {
+                50: '#EEF4EF', 100: '#DCE8DF', 200: '#B7D0BF', 300: '#8BB29A', 400: '#5E9175',
+                500: '#3E7759', 600: '#2B6046', 700: '#1F4D3A', 800: '#183D2E', 900: '#112C21', 950: '#0A1C15',
+              },
+              gray: {
+                50: '#FAF8F3', 100: '#F2EFE7', 200: '#E6E1D5', 300: '#D3CCBD', 400: '#A79F8E',
+                500: '#7D7566', 600: '#5E574B', 700: '#463F35', 800: '#2E2A23', 900: '#1E2A24',
+              },
+              cream: '#F7F4EC',
+              paper: '#FFFDF8',
+              gold: { 100: '#F6EDCB', 300: '#E2C766', 500: '#C9A227', 700: '#8A6D12' },
+              ink: '#1E2A24',
+            },
+            fontFamily: {
+              sans: ['Inter', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Devanagari', 'sans-serif'],
+              display: ['Fraunces', 'Noto Serif Kannada', 'Noto Serif Telugu', 'Noto Serif Devanagari', 'Georgia', 'serif'],
+            },
+            boxShadow: {
+              soft: '0 1px 2px rgba(30,42,36,.05), 0 6px 18px -8px rgba(30,42,36,.12)',
+              lift: '0 2px 4px rgba(30,42,36,.06), 0 16px 32px -12px rgba(30,42,36,.22)',
+            },
+          }
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Serif+Kannada:wght@600;700&family=Noto+Serif+Telugu:wght@600;700&family=Noto+Serif+Devanagari:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif;
+        background-color: #F7F4EC;
+        color: #1E2A24;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* Headings: Fraunces for Latin, Noto Serif for Kannada / Telugu / Devanagari */
+      h1, h2, h3, .font-display {
+        font-family: 'Fraunces', 'Noto Serif Kannada', 'Noto Serif Telugu', 'Noto Serif Devanagari', Georgia, serif;
+        font-optical-sizing: auto;
+        letter-spacing: -0.01em;
+      }
+      :focus-visible { outline: 3px solid #C9A227; outline-offset: 2px; border-radius: 10px; }
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #D3CCBD; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #A79F8E; }
+      /* furrow lines used behind the home field card */
+      .furrows {
+        background-image: repeating-linear-gradient(-28deg, rgba(255,255,255,.055) 0 2px, transparent 2px 22px);
+      }
+      @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+      .shimmer { background: linear-gradient(90deg, #F2EFE7 0px, #FAF8F3 120px, #F2EFE7 240px); background-size: 800px 100%; animation: shimmer 1.4s linear infinite; }
+      @media (prefers-reduced-motion: reduce) { .shimmer { animation: none; } }
+    </style>
+
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

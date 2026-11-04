@@ -1,0 +1,29 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "Inter, Segoe UI, Helvetica, Arial, sans-serif",
+    "fontSize": "15px",
+    "primaryColor": "#EAF2EC",
+    "primaryBorderColor": "#1F4D3A",
+    "primaryTextColor": "#1E2A24",
+    "secondaryColor": "#FBF3DC",
+    "tertiaryColor": "#FFFDF7",
+    "lineColor": "#5B6B62",
+    "clusterBkg": "#FFFDF7",
+    "clusterBorder": "#C9B98A",
+    "edgeLabelBackground": "#FFFDF7",
+    "noteBkgColor": "#FBF3DC",
+    "noteBorderColor": "#C9A227",
+    "actorBkg": "#EAF2EC",
+    "actorBorder": "#1F4D3A",
+    "signalColor": "#1E2A24",
+    "labelBoxBkgColor": "#FBF3DC"
+  },
+  "flowchart": {
+    "curve": "basis",
+    "padding": 14,
+    "nodeSpacing": 38,
+    "rankSpacing": 46,
+    "wrappingWidth": 330
+  }
+}

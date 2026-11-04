@@ -1,0 +1,18 @@
+flowchart TB
+  classDef in fill:#1F4D3A,color:#fff,stroke:#1F4D3A
+  classDef llm fill:#F3EEF7,stroke:#6B4C8A
+  classDef srch fill:#EAF2EC,stroke:#1F4D3A
+  classDef out fill:#FBF3DC,stroke:#C9A227
+
+  Q["Farmer asks (any language, typed or spoken)<br/>“ಮೆಕ್ಕೆಜೋಳದಲ್ಲಿ ಸೈನಿಕ ಹುಳು ನಿಯಂತ್ರಣ ಹೇಗೆ?”<br/>(How to control armyworm in maize?) · scope: one book or the whole library"]:::in
+  Q --> U["① Understand · fast LLM<br/>→ English query: “fall armyworm control in maize”<br/>→ keywords: Spodoptera frugiperda, FAW, emamectin…"]:::llm
+  U --> E["② Embed both questions<br/>(farmer's words + English) → vectors"]:::srch
+  U --> K["② Keywords → tokens"]:::srch
+  E --> DS["③a Meaning search (dense)<br/>top 30 chunks per question, per book"]:::srch
+  K --> BM["③b Word search (BM25)<br/>top 30 chunks per book"]:::srch
+  DS --> F["④ Fuse rankings (RRF)<br/>keep best 40 candidates"]:::srch
+  BM --> F
+  F --> R["⑤ Rerank · cross-encoder reads<br/>question + passage together → 8 best,<br/>near-duplicates removed"]:::srch
+  R --> A["⑥ Answer · LLM writes in Kannada<br/>ONLY from the 8 numbered passages,<br/>cites [1] [2] after each fact"]:::llm
+  A --> O["⑦ Show: answer + 🔊 listen + source cards<br/>tap [2] → book opens at that page"]:::out
+  R -. no LLM key / LLM down .-> X["Fallback: show the 3 best<br/>passages as they are"]:::out

@@ -1,0 +1,19 @@
+flowchart TB
+  classDef q fill:#1F4D3A,color:#fff,stroke:#1F4D3A
+  classDef bad fill:#FBE9E7,stroke:#B23A2E,color:#5A1A12
+  classDef good fill:#EAF2EC,stroke:#1F4D3A
+  classDef book fill:#FBF3DC,stroke:#C9A227
+
+  subgraph A["❌ Without RAG — the AI answers from memory"]
+    direction LR
+    Q1["Farmer: How much neem oil<br/>for aphids on chilli?"]:::q --> L1["AI model<br/>(general knowledge only)"] --> R1["Confident answer, no source.<br/>May be wrong or not for India"]:::bad
+  end
+
+  subgraph B["✅ With RAG — look it up first, then answer"]
+    direction LR
+    Q2["Same question"]:::q --> S["1 · Retrieve<br/>find the best pages<br/>in trusted farm books"]:::book
+    S --> P["2 · Augment<br/>paste those pages<br/>into the AI's prompt"]:::book
+    P --> G["3 · Generate<br/>AI answers only<br/>from those pages"]:::good
+    G --> R2["Answer in Kannada<br/>[1] [2] → book + page"]:::good
+  end
+  A ~~~ B

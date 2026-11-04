@@ -1,0 +1,24 @@
+{
+  "name": "agriqnet-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AgriQNet – crop & fertilizer recommendation, YOLO pest detection, district pest-alert network, AgriRAG and agro-weather alerts in one command.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "start": "node scripts/launcher.mjs",
+    "dev": "node scripts/launcher.mjs",
+    "start:open": "node scripts/launcher.mjs --open",
+    "setup": "node scripts/launcher.mjs --setup-only",
+    "reseed": "node scripts/launcher.mjs --reseed",
+    "demo": "node scripts/launcher.mjs --demo",
+    "demo:reset": "npm --prefix services/api run seed -- --demo",
+    "seed": "npm --prefix services/api run seed",
+    "status": "node scripts/status.mjs",
+    "build": "npm --prefix apps/web run build && npm --prefix apps/weather run build",
+    "i18n": "node scripts/i18n-translate.mjs",
+    "i18n:check": "node scripts/i18n-translate.mjs --check"
+  }
+}

@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+*.local
+__pycache__/
+*.pyc
+.venv/
+venv/
+.cache/
+logs/
+*.log
+services/agri-rag/data/*
+!services/agri-rag/data/.gitkeep
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Farmer Library starter PDFs (large; kept out of git)
+library-sources/
+ANNUAL HIGHLIGHTS 2025-26.pdf

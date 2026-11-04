@@ -1,0 +1,133 @@
+{
+  "_about": "Starter shelf + listing pages re-checked every LIBRARY_CRAWL_DAYS (default 30). Edit freely: new seeds are queued on the next start; URLs already seen are never downloaded again.",
+  "seeds": [
+    {
+      "url": "https://icar.org.in/sites/default/files/2026-08/ANNUAL%20HIGHLIGHTS%202025-26.pdf",
+      "publisher": "ICAR",
+      "year": "2025-26",
+      "category": "reports",
+      "title": "ICAR Annual Highlights 2025-26"
+    },
+    {
+      "url": "https://icar.org.in/sites/default/files/2026-08/ICAR%20Annual%20Report%202025-26%20English.pdf",
+      "publisher": "ICAR",
+      "year": "2025-26",
+      "category": "reports",
+      "title": "ICAR Annual Report 2025-26"
+    },
+    {
+      "url": "https://icar.org.in/sites/default/files/Circulars/ICAR-En-Kharif-Agro-Advisories-for-Farmers-2025.pdf",
+      "publisher": "ICAR",
+      "year": "2025",
+      "category": "advisories",
+      "title": "Kharif Agro-Advisories for Farmers 2025"
+    },
+    {
+      "url": "https://www.uasbangalore.edu.in/wp-content/uploads/2026/06/POP-Final-Book-2025.pdf",
+      "publisher": "UAS Bengaluru",
+      "year": "2025",
+      "category": "crop_guides",
+      "title": "Package of Practices for Field Crops 2025 (Kannada)"
+    },
+    {
+      "url": "https://www.uasbangalore.edu.in/wp-content/uploads/2026/05/technologies-developed-2000-2025.pdf",
+      "publisher": "UAS Bengaluru",
+      "year": "2000-2025",
+      "category": "technology",
+      "title": "UAS Bengaluru Technologies 2000-2025"
+    },
+    {
+      "url": "https://icar.org.in/sites/default/files/Circulars/Farmers%20Innovations_2025___English.pdf",
+      "publisher": "ICAR",
+      "year": "2025",
+      "category": "technology",
+      "title": "Farmers' Innovations 2025"
+    },
+    {
+      "url": "https://icar.org.in/sites/default/files/2026-07/Acid%20Soils%20of%20India.pdf",
+      "publisher": "ICAR",
+      "year": "2026",
+      "category": "soil_water",
+      "title": "Acid Soils of India"
+    },
+    {
+      "url": "https://icar.org.in/sites/default/files/2026-10/Khet-Bachaao-Abhiyaan-2026.pdf",
+      "publisher": "ICAR",
+      "year": "2026",
+      "category": "advisories",
+      "title": "Khet Bachaao Abhiyaan 2026"
+    },
+    {
+      "url": "https://icar.org.in/sites/default/files/Circulars/Inventory-of-Indigenous-Technical-Knowledge-in-Agriculture-Document-1.pdf",
+      "publisher": "ICAR",
+      "year": "",
+      "category": "crop_guides",
+      "title": "Indigenous Technical Knowledge in Agriculture"
+    },
+    {
+      "url": "https://icar.org.in/sites/default/files/Circulars/ICAR%20Insights%20Outcomes%20Booklet%20%28English%29.pdf",
+      "publisher": "ICAR",
+      "year": "2025",
+      "category": "advisories",
+      "title": "Viksit Krishi Sankalp Abhiyan 2025: ICAR Insights"
+    },
+    {
+      "url": "https://desagri.gov.in/wp-content/uploads/2022/09/ASI-June-2022-1.pdf",
+      "publisher": "DES, Ministry of Agriculture",
+      "year": "2022",
+      "category": "schemes_markets",
+      "title": "Agricultural Situation in India – June 2022"
+    }
+  ],
+  "crawl": [
+    {
+      "name": "ICAR annual reports",
+      "url": "https://icar.org.in/en/annual-report",
+      "publisher": "ICAR",
+      "category": "reports",
+      "max_new": 2,
+      "max_mb": 40
+    },
+    {
+      "name": "ICAR e-books",
+      "url": "https://icar.org.in/index.php/en/e-books",
+      "publisher": "ICAR",
+      "category": "",
+      "max_new": 3,
+      "max_mb": 40
+    },
+    {
+      "name": "ICAR reports & advisories",
+      "url": "https://icar.org.in/en/other-reports",
+      "publisher": "ICAR",
+      "category": "",
+      "max_new": 3,
+      "max_mb": 40
+    },
+    {
+      "name": "Agricultural Situation in India (DES, quarterly since 2025)",
+      "url": "https://desagri.gov.in/document-report-category/agricultural-situation-in-india/",
+      "publisher": "DES, Ministry of Agriculture",
+      "category": "schemes_markets",
+      "max_new": 2,
+      "max_mb": 30
+    },
+    {
+      "name": "DES monthly bulletin",
+      "url": "https://desagri.gov.in/document-report-category/monthly-bulletin/",
+      "publisher": "DES, Ministry of Agriculture",
+      "category": "schemes_markets",
+      "max_new": 2,
+      "max_mb": 30
+    },
+    {
+      "name": "UAS Bengaluru publications",
+      "url": "https://www.uasbangalore.edu.in/other-publications/",
+      "publisher": "UAS Bengaluru",
+      "category": "",
+      "max_new": 2,
+      "max_mb": 40,
+      "include": "(?i)pop|practice|technolog|newsletter|nl-"
+    }
+  ]
+}

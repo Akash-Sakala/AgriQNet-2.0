@@ -1,0 +1,37 @@
+flowchart TB
+  classDef user fill:#1F4D3A,color:#fff,stroke:#1F4D3A
+  classDef svc fill:#EAF2EC,stroke:#1F4D3A
+  classDef store fill:#FBF3DC,stroke:#C9A227
+  classDef ext fill:#F3EEF7,stroke:#6B4C8A
+  classDef model fill:#E8F1F8,stroke:#2F6690
+
+  F["👩‍🌾 Farmer / officer · phone or laptop browser"]:::user
+  WEB["Web app · React · port 3000<br/>Farmer Library screens · Ask screen (‘From Farmer Library’)"]:::svc
+  GW["API gateway · Express · port 5000<br/>/api/library/* — checks login, adds user id · name · role"]:::svc
+  F --> WEB --> GW --> API
+
+  subgraph RAG["AgriRAG service · FastAPI · port 8003"]
+    direction TB
+    API["HTTP endpoints<br/>upload · url · books · jobs · chat"]:::svc
+    API --> Q["Job queue · 2 worker lanes<br/>farmers first, automatic sources second"]:::svc
+    Q --> ING["Ingestion pipeline<br/>check → read → topic → chunk → embed → cover"]:::svc
+    API --> CH["Chat pipeline<br/>understand → search → rerank → answer"]:::svc
+    SCH["Source checker (optional, monthly)"]:::svc -- queues new reports --> Q
+  end
+
+  subgraph DISK["Library folder on disk"]
+    DB[("library.db · SQLite<br/>books · jobs · seen links")]:::store
+    BK[("books/&lt;id&gt;/ · source file · chunks.jsonl<br/>emb.npy (vectors) · cover images")]:::store
+  end
+
+  subgraph AI["AI models"]
+    EM["Embedder · multilingual-e5-base<br/>(local, CPU)"]:::model
+    RR["Reranker · mMiniLM cross-encoder<br/>(local, CPU)"]:::model
+    LLM["LLM · Groq gpt-oss → Gemini fallback<br/>(cloud, API key)"]:::ext
+    IMG["Cover art · Gemini image / HF FLUX<br/>(cloud, optional)"]:::ext
+  end
+
+  RAG ==> DISK
+  RAG ==> AI
+  SRC["ICAR · UAS · PIB · FAO · any PDF or web article"]:::ext
+  ING -. download .-> SRC

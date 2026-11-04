@@ -1,0 +1,199 @@
+{
+  "app": "AgriQNet web app (http://localhost:3000)",
+  "captured": "2026-11-04",
+  "note": "Phone shots: 390x690 CSS viewport at 1.25x. Desktop shots: 1280x720 CSS viewport rendered at 1600x900.",
+  "scenes": [
+    {
+      "file": "01-language-choice-phone.jpg",
+      "title": "Choose your language",
+      "caption": "First screen: Kannada, Hindi, Telugu or English, each written and spoken in its own language.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "02-login-phone.jpg",
+      "title": "Login and demo accounts",
+      "caption": "Phone-number login with one-tap Try Demo Mode and Officer demo buttons.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "03-home-desktop.png",
+      "title": "Farmer home (desktop)",
+      "caption": "District weather card, nearby pest alerts and picture tiles; sidebar navigation on larger screens.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "file": "04-home-phone.jpg",
+      "title": "Farmer home (phone)",
+      "caption": "The same home on a phone: greeting, district weather, rain chance and a pest-alert banner.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "05-home-tiles-phone.jpg",
+      "title": "Six picture tiles",
+      "caption": "Weather, Which crop?, Fertilizer, Pest photo, Alerts and Ask, each with a read-aloud button.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "06-home-kannada-phone.jpg",
+      "title": "Instant language switch",
+      "caption": "The whole app, district names and pest names included, switched to Kannada.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "07-weather-station-desktop.png",
+      "title": "Weather station",
+      "caption": "Current conditions, 7-day farm weather alerts and today's temperature curve for the farmer's district.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "file": "08-weather-forecast-desktop.png",
+      "title": "16-day farm forecast",
+      "caption": "AI farm decisions (sowing, irrigation, spray safety, crop health) next to the 16-day forecast.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "file": "09-crop-model-inputs-phone.jpg",
+      "title": "Crop recommender inputs",
+      "caption": "Precision Model tab: N, P, K, temperature, humidity, pH and rainfall.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "10-crop-result-phone.jpg",
+      "title": "Crop recommendation",
+      "caption": "Rice at 99.7% confidence from the AgriQNet v3 quantum-hybrid model (7 simulated qubits).",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "11-fertilizer-genai-phone.jpg",
+      "title": "Fertilizer calculator",
+      "caption": "GenAI fertilizer plan with picture buttons for the target crop.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "12-fertilizer-result-phone.jpg",
+      "title": "Fertilizer recommendation",
+      "caption": "Urea from N/P/K via the quantum-hybrid fertilizer model (3 simulated qubits).",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "13-pest-photo-start-phone.jpg",
+      "title": "Pest photo: step 1",
+      "caption": "Take a photo or choose one from the gallery, with spoken guidance.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "14-pest-detected-phone.jpg",
+      "title": "Pest identified",
+      "caption": "YOLOv8 (IP102, 102 classes) names the pest from the photo.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "15-pest-advice-phone.jpg",
+      "title": "What to do now",
+      "caption": "Host crop, detector confidence (68%) and plain-language control steps.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "16-pest-warn-severity-phone.jpg",
+      "title": "Warn nearby farmers",
+      "caption": "Pick how bad it is: very bad (2 districts away), spreading (neighbours) or a few pests (this district).",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "17-pest-warn-send-phone.jpg",
+      "title": "Who gets the SMS",
+      "caption": "Breadth-first search over the district graph previews the districts that will be texted.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "18-alerts-farmer-phone.jpg",
+      "title": "Alerts for my district",
+      "caption": "Active pest warnings for the farmer's district, with report and map shortcuts.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "19-alerts-weather-sms-phone.jpg",
+      "title": "Weather alerts and basic-phone SMS",
+      "caption": "Rule-based weather warnings and SMS for a family member's basic phone.",
+      "device": "phone",
+      "width": 488,
+      "height": 863
+    },
+    {
+      "file": "20-alert-network-map-desktop.png",
+      "title": "Alert Network map",
+      "caption": "Karnataka district map: red, orange and yellow zones around a reported outbreak, with district details.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "file": "21-officer-alert-history-desktop.png",
+      "title": "Officer view",
+      "caption": "Agriculture officer dashboard: districts, registered farmers, active alerts and alert history.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "file": "22-farmer-library-desktop.png",
+      "title": "Farmer Library",
+      "caption": "A streaming-style shelf of farm books and reports, with search, Ask the whole library and Add a book.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "file": "23-library-chat-citations-desktop.png",
+      "title": "Ask a book",
+      "caption": "AgriRAG answers from one book with numbered page citations.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "file": "24-ask-assistant-desktop.png",
+      "title": "Ask anything",
+      "caption": "Agri Assistant answers district-specific farming questions, with suggested topics and read-aloud.",
+      "device": "desktop",
+      "width": 1600,
+      "height": 900
+    }
+  ]
+}

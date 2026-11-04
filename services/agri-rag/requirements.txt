@@ -1,0 +1,17 @@
+# Farmer Library (AgriRAG). The launcher installs ../requirements.txt (shared venv); this list is for
+# running the service on its own:  pip install -r requirements.txt  &&  python app.py
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+python-dotenv>=1.0
+requests>=2.31
+pymupdf>=1.26
+kannada-ascii-unicode>=0.1.5
+trafilatura>=2.0
+datasketch>=1.6
+sentence-transformers>=3.0
+truststore>=0.10
+cryptography>=42
+google-genai>=1.0
+numpy>=2.0,<3
+pillow>=10

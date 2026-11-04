@@ -1,0 +1,31 @@
+# Shared Python environment for the three Python micro-services.
+# (torch/torchvision are installed first from the PyTorch CPU index by the launcher.)
+
+# --- pest-detector (YOLOv8, IP102 classes) ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+ultralytics>=8.3.200
+pillow>=10
+
+# --- recommender (AgriQNet v3 quantum-hybrid crop & fertilizer models) ---
+# The v3 models (models/v3) and the legacy pickles were saved with scikit-learn 1.7.2 -> keep it pinned.
+# The quantum circuits run on the bundled NumPy simulator (services/recommender/agriqnet): no PennyLane/GPU needed.
+scikit-learn==1.7.2
+joblib>=1.4
+numpy>=2.0,<3
+pandas>=2.0
+scipy>=1.11
+pydantic>=2
+
+# --- agri-rag: Farmer Library (PDF/article ingestion, multilingual hybrid search, chat) ---
+python-dotenv>=1.0
+requests>=2.31
+pymupdf>=1.26                 # PDF text, headings, cover images (fast, no GPU)
+kannada-ascii-unicode>=0.1.5  # converts legacy Nudi/Baraha Kannada fonts to Unicode
+trafilatura>=2.0              # readable text from pasted article links
+datasketch>=1.6               # MinHash near-duplicate detection
+sentence-transformers>=3.0    # multilingual-e5 embeddings + mMiniLM cross-encoder reranker
+truststore>=0.10              # use the Windows/macOS certificate store (some .gov.in sites need it)
+cryptography>=42              # completes missing intermediate certificates (AIA)
+google-genai>=1.0             # Gemini fallback LLM / optional AI cover art

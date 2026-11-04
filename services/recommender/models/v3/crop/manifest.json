@@ -1,0 +1,104 @@
+{
+  "task": "crop",
+  "description": "Crop: Gaussian NB on raw soil/climate readings + QUBO-selected quantum-circuit features (7 qubits)",
+  "source_run": "full_seed42 (Modal, full budget)",
+  "nested_cv": {
+    "model": "gnb",
+    "arm": "hybrid_qubo",
+    "accuracy": 0.9941,
+    "log_loss": 0.0165,
+    "note": "best scikit-learn-only quantum hybrid; run's overall crop pick was TabPFN + separable circuits (acc 0.9948, log-loss 0.0129)"
+  },
+  "refit": {
+    "members": [
+      "gnb:hybrid_qubo"
+    ],
+    "params": {
+      "gnb:hybrid_qubo": {
+        "params": {
+          "k": 3,
+          "var_smoothing": 1.0817142818425098e-06
+        },
+        "inner_cv": 0.01751557417473134
+      }
+    },
+    "temperature": 1.3703688109405139,
+    "conformal_qhat": 0.0009136990154696711,
+    "oof_metrics_before_T": {
+      "accuracy": 0.9931818181818182,
+      "macro_f1": 0.9931739280056849,
+      "balanced_accuracy": 0.9931818181818183,
+      "log_loss": 0.01620636145183585,
+      "top3": 1.0,
+      "ece": 0.002873701410156231
+    },
+    "oof_metrics_after_T": {
+      "accuracy": 0.9931818181818182,
+      "macro_f1": 0.9931739280056849,
+      "balanced_accuracy": 0.9931818181818183,
+      "log_loss": 0.015184630663962289,
+      "top3": 1.0,
+      "ece": 0.0020840603104236213
+    },
+    "oof_conformal_coverage": 0.9931818181818182,
+    "oof_mean_set_size": 1.0
+  },
+  "data_sha256": "54a5a6e5408668e668667efc50de2fc867c1b875e0431b4f54dd331b0a109a4e",
+  "seed": 42,
+  "saved_at": "2026-10-29 16:43:48",
+  "versions": {
+    "python": "3.12.3",
+    "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.7.2",
+    "pandas": "3.1.0",
+    "pennylane": null,
+    "pennylane-lightning": null,
+    "dwave-samplers": null,
+    "optuna": "5.0.0",
+    "xgboost": null,
+    "lightgbm": null,
+    "catboost": null,
+    "tabpfn": null,
+    "tabpfn-extensions": null,
+    "torch": null,
+    "joblib": "1.6.0"
+  },
+  "input_columns": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall"
+  ],
+  "labels": [
+    "apple",
+    "banana",
+    "blackgram",
+    "chickpea",
+    "coconut",
+    "coffee",
+    "cotton",
+    "grapes",
+    "jute",
+    "kidneybeans",
+    "lentil",
+    "maize",
+    "mango",
+    "mothbeans",
+    "mungbean",
+    "muskmelon",
+    "orange",
+    "papaya",
+    "pigeonpeas",
+    "pomegranate",
+    "rice",
+    "watermelon"
+  ],
+  "temperature": 1.3703688109405139,
+  "conformal_qhat": 0.0009136990154696711,
+  "conformal_alpha": 0.1
+}

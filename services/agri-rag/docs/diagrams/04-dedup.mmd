@@ -1,0 +1,12 @@
+flowchart LR
+  classDef chk fill:#EAF2EC,stroke:#1F4D3A
+  classDef hit fill:#FBF3DC,stroke:#C9A227
+  classDef new fill:#1F4D3A,color:#fff,stroke:#1F4D3A
+
+  N["New PDF"] --> A{{"① SHA-256 of the file bytes<br/>exact same file?"}}:::chk
+  A -- no --> B{{"② hash of the cleaned-up text<br/>same words, different file?"}}:::chk
+  B -- no --> C{{"③ MinHash: ≥ 85% of<br/>5-word phrases shared?"}}:::chk
+  C -- no --> OK["New book → process it"]:::new
+  A -- yes --> G["Duplicate — not processed again.<br/>Farmer is taken to the existing book's chat.<br/>same_file · same_text · near_copy"]:::hit
+  B -- yes --> G
+  C -- yes --> G

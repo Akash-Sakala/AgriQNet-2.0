@@ -1,0 +1,90 @@
+{
+  "task": "fert_npk",
+  "description": "Fertilizer (N, P, K): soft vote of SVM + quantum features, quantum fidelity-kernel SVM and ExtraTrees + quantum features (3 qubits)",
+  "source_run": "full_seed42 (Modal, full budget)",
+  "nested_cv": {
+    "model": "svm_rbf:hybrid_qubo+qsvm:qsvm+extratrees:hybrid_qubo",
+    "arm": "ensemble_hybrid_top3",
+    "macro_f1": 0.9934,
+    "accuracy": 0.996
+  },
+  "refit": {
+    "members": [
+      "svm_rbf:hybrid_qubo",
+      "qsvm:qsvm",
+      "extratrees:hybrid_qubo"
+    ],
+    "params": {
+      "svm_rbf:hybrid_qubo": {
+        "k": 3,
+        "C": 566.9849511478844,
+        "gamma": 0.4570563099801455,
+        "class_weight": null
+      },
+      "qsvm:qsvm": {
+        "family": "iqp",
+        "scale": 0.2963151121655555,
+        "C": 707.2114131472224
+      },
+      "extratrees:hybrid_qubo": {
+        "k": 1,
+        "n_estimators": 300,
+        "max_depth": 11,
+        "min_samples_leaf": 1,
+        "max_features": "1.0",
+        "class_weight": "balanced"
+      }
+    },
+    "temperature": 0.2500041101169196,
+    "conformal_qhat": 0.0020688876779859644,
+    "oof_metrics_after_T": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "balanced_accuracy": 1.0,
+      "log_loss": 0.003523770939120167,
+      "top3": 1.0,
+      "ece": 0.003174614455899888
+    },
+    "oof_conformal_coverage": 1.0,
+    "oof_mean_set_size": 1.0
+  },
+  "data_sha256": "1f8ffdfa54e8e5d1fa312c5ddc80591148a6e7b852cfed9961098f03f643bd61",
+  "seed": 42,
+  "saved_at": "2026-10-29 16:42:33",
+  "versions": {
+    "python": "3.12.3",
+    "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.7.2",
+    "pandas": "3.1.0",
+    "pennylane": null,
+    "pennylane-lightning": null,
+    "dwave-samplers": null,
+    "optuna": "5.0.0",
+    "xgboost": null,
+    "lightgbm": null,
+    "catboost": null,
+    "tabpfn": null,
+    "tabpfn-extensions": null,
+    "torch": null,
+    "joblib": "1.6.0"
+  },
+  "input_columns": [
+    "Nitrogen",
+    "Potassium",
+    "Phosphorous"
+  ],
+  "labels": [
+    "10-26-26",
+    "14-35-14",
+    "17-17-17",
+    "20-20",
+    "28-28",
+    "DAP",
+    "Urea"
+  ],
+  "temperature": 0.2500041101169196,
+  "conformal_qhat": 0.0020688876779859644,
+  "conformal_alpha": 0.1
+}

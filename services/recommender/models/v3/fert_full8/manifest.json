@@ -1,0 +1,82 @@
+{
+  "task": "fert_full8",
+  "description": "Fertilizer (8 inputs): ExtraTrees on soil/crop/weather + QUBO-selected quantum features (6 qubits)",
+  "source_run": "full_seed42 (Modal, full budget)",
+  "nested_cv": {
+    "model": "extratrees",
+    "arm": "hybrid_qubo",
+    "macro_f1": 0.995,
+    "accuracy": 0.996
+  },
+  "refit": {
+    "members": [
+      "extratrees:hybrid_qubo"
+    ],
+    "params": {
+      "extratrees:hybrid_qubo": {
+        "k": 3,
+        "n_estimators": 500,
+        "max_depth": 10,
+        "min_samples_leaf": 3,
+        "max_features": "1.0",
+        "class_weight": "balanced"
+      }
+    },
+    "temperature": 0.2500052011320457,
+    "conformal_qhat": 0.00010561206273884682,
+    "oof_metrics_after_T": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "balanced_accuracy": 1.0,
+      "log_loss": 0.006136697957739559,
+      "top3": 1.0,
+      "ece": 0.00528852811339016
+    },
+    "oof_conformal_coverage": 1.0,
+    "oof_mean_set_size": 1.0
+  },
+  "data_sha256": "fc185064de82310f3343ba6dc85631ebca2c09ebbd0de522fc1731a4db2b7b0a",
+  "seed": 42,
+  "saved_at": "2026-10-29 16:42:41",
+  "versions": {
+    "python": "3.12.3",
+    "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.7.2",
+    "pandas": "3.1.0",
+    "pennylane": null,
+    "pennylane-lightning": null,
+    "dwave-samplers": null,
+    "optuna": "5.0.0",
+    "xgboost": null,
+    "lightgbm": null,
+    "catboost": null,
+    "tabpfn": null,
+    "tabpfn-extensions": null,
+    "torch": null,
+    "joblib": "1.6.0"
+  },
+  "input_columns": [
+    "Temperature",
+    "Humidity",
+    "Moisture",
+    "Nitrogen",
+    "Potassium",
+    "Phosphorous",
+    "Soil Type",
+    "Crop Type"
+  ],
+  "labels": [
+    "10-26-26",
+    "14-35-14",
+    "17-17-17",
+    "20-20",
+    "28-28",
+    "DAP",
+    "Urea"
+  ],
+  "temperature": 0.2500052011320457,
+  "conformal_qhat": 0.00010561206273884682,
+  "conformal_alpha": 0.1
+}

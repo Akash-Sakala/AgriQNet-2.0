@@ -1,0 +1,23 @@
+flowchart TB
+  classDef step fill:#EAF2EC,stroke:#1F4D3A
+  classDef stop fill:#FBE9E7,stroke:#B23A2E,color:#5A1A12
+  classDef dup fill:#FBF3DC,stroke:#C9A227
+  classDef done fill:#1F4D3A,color:#fff,stroke:#1F4D3A
+  classDef start fill:#FFFDF7,stroke:#5B6B62
+
+  U["📄 Upload a PDF"]:::start --> PC{{"Instant check (≈1 s)<br/>same file or same text already here?"}}
+  L["🔗 Paste a link"]:::start --> LS{{"Link already added?"}}
+  PC -- no --> QU["queued"]:::step
+  LS -- no --> QU
+  PC -- yes --> D1["Already in the library →<br/>open that book's chat"]:::dup
+  LS -- yes --> D1
+  QU --> DL["download<br/>links only — a PDF or a web article"]:::step
+  DL --> CK["checking<br/>fingerprints: SHA-256 · text hash · MinHash"]:::step
+  CK -- copy found --> D1
+  CK -- no text layer --> RJ1["rejected: scanned pages"]:::stop
+  CK --> RD["reading<br/>text per page · headings · fix old Kannada fonts,<br/>broken ligatures, repeated headers/footers"]:::step
+  RD --> TP["topic — 1 LLM call<br/>title · summary · sample questions in 4 languages<br/>category · publisher · year · is it about farming?"]:::step
+  TP -- not farming --> RJ2["rejected: not agriculture"]:::stop
+  TP --> IX["indexing<br/>~1,100-character chunks → one 768-number vector each"]:::step
+  IX --> CV["cover<br/>AI art → printed cover → best photo → designed cover"]:::step
+  CV --> OK["✅ ready — on the shelf for everyone"]:::done
