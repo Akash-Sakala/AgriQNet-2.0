@@ -189,11 +189,11 @@ const SmsSignup: React.FC<{ lang: Language; user: Farmer }> = ({ lang, user }) =
     <section className="bg-paper rounded-3xl border border-gray-200 shadow-soft p-5">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 text-left">
         <IconChip icon={DeviceMobile} tone="forest" />
-        <span className="flex-1">
+        <span className="flex-1 min-w-0">
           <span className="block text-xl font-bold text-gray-900">{t.smsBasicTitle}</span>
           <span className="block text-gray-600">{t.smsBasicDesc}</span>
         </span>
-        <ChevronRight className={`text-gray-500 transition-transform ${open ? 'rotate-90' : ''}`} />
+        <ChevronRight className={`shrink-0 text-gray-500 transition-transform ${open ? 'rotate-90' : ''}`} />
       </button>
       {open && (
         <div className="mt-4 space-y-3">

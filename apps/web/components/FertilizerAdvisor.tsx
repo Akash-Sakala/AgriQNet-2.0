@@ -135,7 +135,7 @@ const FertilizerAdvisor: React.FC<{ lang: Language; user: Farmer; onBack: () => 
 
           {mode === 'genai' && !loading && plans.length > 0 && (
             <>
-              <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                 <div>
                   <h2 className="text-xl md:text-2xl font-semibold text-ink">{cropLabelShown ? fmt(t.fertPlanFor, { crop: cropLabelShown }) : t.fertPlanTitle}</h2>
                   <p className="text-gray-600">{t.fertPlanHint}</p>

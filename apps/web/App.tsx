@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Globe, Question as HelpCircle, SignOut as LogOut, List as Menu, X, CircleNotch as Loader2, SlidersHorizontal as Settings2, Check } from '@phosphor-icons/react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { SCREEN, IconChip, Ico, MapPin as PinIcon, IdentificationBadge, Plant, TONES } from './components/ui/Icons';
 import { NavView, Language, Farmer } from './types';
 import { getTranslation, LANGUAGES, loadLanguage, saveLanguage, hasSavedLanguage, districtName } from './utils/translations';
 import Home from './components/Home';
-import CropAdvisor from './components/CropAdvisor';
-import FertilizerAdvisor from './components/FertilizerAdvisor';
-import PestCheck from './components/PestCheck';
-import ChatModule from './components/ChatModule';
-import Library from './components/Library';
-import SmartWeather from './components/SmartWeather';
-import PestAlerts from './components/PestAlerts';
-import AlertNetwork from './components/AlertNetwork';
+const CropAdvisor = lazy(() => import('./components/CropAdvisor'));
+const FertilizerAdvisor = lazy(() => import('./components/FertilizerAdvisor'));
+const PestCheck = lazy(() => import('./components/PestCheck'));
+const ChatModule = lazy(() => import('./components/ChatModule'));
+const Library = lazy(() => import('./components/Library'));
+const SmartWeather = lazy(() => import('./components/SmartWeather'));
+const PestAlerts = lazy(() => import('./components/PestAlerts'));
+const AlertNetwork = lazy(() => import('./components/AlertNetwork'));
 import TourGuide, { TourStep } from './components/TourGuide';
 import AuthPage from './components/AuthPage';
 import LanguageGate from './components/LanguageGate';
@@ -141,7 +141,7 @@ const App: React.FC = () => {
   const LangButton = (
     <div className="relative" id="lang-selector">
       <button onClick={() => setLangOpen(!langOpen)} aria-expanded={langOpen} className="flex items-center gap-2 bg-paper px-3 py-2.5 rounded-2xl border border-gray-200 text-gray-800 font-semibold hover:border-agri-400 transition-colors">
-        <Globe size={20} /> <span>{LANGUAGES[activeLang].split(' (')[0]}</span>
+        <Globe size={20} /> <span className="whitespace-nowrap">{LANGUAGES[activeLang].split(' (')[0]}</span>
       </button>
       <AnimatePresence>
         {langOpen && (
@@ -227,7 +227,10 @@ const App: React.FC = () => {
           <AnimatePresence mode="wait" initial={false} custom={navDir}>
             <motion.div key={view} custom={navDir} variants={screenVariants} initial="enter" animate="center" exit="exit">
               <ScreenErrorBoundary lang={activeLang} name={view} onHome={view === 'home' ? undefined : () => go('home')}>
-                {screen()}
+                {/* screens load on first open (smaller first download on budget phones) */}
+                <Suspense fallback={<div className="space-y-4 pt-2" aria-busy="true"><div className="shimmer h-14 rounded-2xl" /><div className="shimmer h-48 rounded-[20px]" /><div className="shimmer h-32 rounded-[20px]" /></div>}>
+                  {screen()}
+                </Suspense>
               </ScreenErrorBoundary>
             </motion.div>
           </AnimatePresence>

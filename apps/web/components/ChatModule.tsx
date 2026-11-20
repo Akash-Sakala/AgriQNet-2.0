@@ -189,7 +189,7 @@ const ChatModule: React.FC<ChatModuleProps> = ({ lang, user, onBack, onNavigate 
               {messages.map((m) => (
                 <li key={m.id} data-msg className={cn('flex gap-2.5 scroll-mt-24', m.role === 'user' ? 'justify-end' : 'justify-start')}>
                   {m.role === 'model' && <span className="w-9 h-9 shrink-0 rounded-full bg-agri-100 text-agri-700 flex items-center justify-center mt-1" aria-hidden><Plant size={20} weight="duotone" /></span>}
-                  <div className={cn('max-w-[86%] md:max-w-[75%] flex flex-col gap-2', m.role === 'user' && 'items-end')}>
+                  <div className={cn('min-w-0 max-w-[86%] md:max-w-[75%] flex flex-col gap-2 [overflow-wrap:anywhere]', m.role === 'user' && 'items-end')}>
                     <div className={cn('px-4 py-3 rounded-[20px] text-lg leading-relaxed',
                       m.role === 'user' ? 'bg-agri-700 text-white rounded-tr-md' : m.failed ? 'bg-clay-50 border border-clay-600/30 text-clay-700 rounded-tl-md' : 'bg-paper border border-gray-200 text-ink rounded-tl-md shadow-soft')}>
                       {m.role === 'user' ? <p className="whitespace-pre-wrap">{m.text}</p> : <div className="markdown-content"><ReactMarkdown components={MD}>{m.text}</ReactMarkdown></div>}

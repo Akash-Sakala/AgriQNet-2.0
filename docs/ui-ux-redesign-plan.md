@@ -439,3 +439,27 @@ Acceptance: screenshots of the Home shelf and the Library page at 375 + 1280 in 
 - [ ] Checked in English **and** Kannada (and spot-checked in Hindi/Telugu)
 - [ ] SpeakButton reads the new content in the selected language
 - [ ] Demo mode and Officer demo still work; console has zero uncaught errors
+
+---
+
+## 7. Implementation status (branch `feat/ui-ux-redesign`, 20 Nov 2026)
+
+All 15 items (#0–#14) are implemented, one commit per item group. Checked in the browser at 360/375 px and 1280 px, in English and Kannada, with a `?pseudo=long` (+50 % text) stress test (no sideways scroll on any screen) and a zero-error console pass.
+
+| # | Status | Notes / deviations |
+|---|---|---|
+| 0 | Done | `design-system/agriqnet/` (MASTER.md, tokens.css, 7 page files). gray-500/600/700 and gold-700 darkened for contrast. |
+| 1 | Done | Shipped earlier on `main` (error boundaries, AI answer normalizers, Gemini `required` fields). |
+| 2 | Done | Tailwind v4 via `@tailwindcss/vite`; shadcn-style Sheet / Progress / Skeleton / `cn()` written by hand (no shadcn CLI run). Fonts still load from Google Fonts. |
+| 3 | Done | `WorkingOn` + `InlineError` used by Home advice, Weather, Crop, Fertilizer, Pest photo; Ask uses a compact staged bubble. |
+| 4 | Done | Native Weather screen; `apps/weather` is no longer embedded but is still in the repo and still started by the launcher. |
+| 5 | Done | New API routes need an **API restart**: `/auth/otp-login`, passwordless `/auth/register`. |
+| 6 | Done | Living sky; dev preview with `?sky=rain|cloudy|dusk|night`. |
+| 7 | Done | Sunlight mode + Reduce motion (Reduce motion from #12 shipped here). |
+| 8 | Done | Voice-first composer, Undo toast (sonner) instead of a confirm sheet. |
+| 9 | Done | Farm profile fields on the user need the **API restart**; until then they are kept on the device. |
+| 10 | Done | No bounding boxes: the detector does not return them. |
+| 11 | Done | Zoom via buttons/pinch (no wheel zoom, so page scroll is not hijacked). |
+| 12 | Done | `components/ui/motion.ts`; screens are now code-split (main bundle 358 kB gz, was 370 kB). |
+| 13 | Partly | Live screens use Phosphor only; `lucide-react` stays for 4 unused files (Dashboard, FarmAlertsPanel, PestControl, WeatherWidget). The custom SVG icon set was not drawn: Phosphor's SprayBottle, Drop, Barn, Tractor, MapPin cover those needs. |
+| 14 | Done | Crop filter shipped as a "For your crops" shelf instead of chips. |

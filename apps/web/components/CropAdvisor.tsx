@@ -182,7 +182,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
               )}
               {!loading && recommendations.length > 0 && (
                 <>
-                  <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <h2 className="text-xl md:text-2xl font-semibold text-ink">{t.bestCropsTitle}</h2>
                     <SpeakButton text={`${t.bestCropsTitle}. ${listenAll}`} lang={lang} label />
                   </div>

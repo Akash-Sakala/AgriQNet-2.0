@@ -41,9 +41,13 @@ export const FarmQuestions: React.FC<{
     return <ChoiceGrid options={opts} value={profile[f] || null} onChange={pick} cols={f === 'fieldSize' ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-3'} size="sm" />;
   };
 
+  // read the current step from a ref so the parent update happens outside a state updater
+  const stepRef = React.useRef(step);
+  stepRef.current = step;
   const next = () => {
     setDir(1);
-    setStep((s) => { if (s >= fields.length - 1) { onEditingChange(false); return 0; } return s + 1; });
+    if (stepRef.current >= fields.length - 1) { setStep(0); onEditingChange(false); }
+    else setStep(stepRef.current + 1);
   };
   const back = () => { setDir(-1); setStep((s) => Math.max(0, s - 1)); };
 

@@ -18,20 +18,8 @@ import { PlatformService, WeatherAlert } from '../services/platformService';
 import { FarmWeather, Place, Verdict, Level, farmVerdicts, getFarmWeather, searchPlaces, wxWord } from '../services/weatherService';
 import { SeverityMeter } from './ui/Severity';
 
-/** The farmer's district as a weather place (falls back to Bengaluru Urban). */
-export function useFarmPlace(user?: Farmer | null, lang: Language = 'en') {
-  const [place, setPlace] = useState<Place | null>(null);
-  useEffect(() => {
-    let live = true;
-    const t = getTranslation(lang);
-    loadDistricts().then((ds) => {
-      const d = ds.find((x) => x.id === user?.districtId) || ds.find((x) => x.id === 'BNU');
-      if (live && d?.geo) setPlace({ lat: d.geo.lat, lon: d.geo.lon, name: districtName(t, d.id, d.name) });
-    }).catch(() => { if (live) setPlace({ lat: 12.97, lon: 77.59, name: districtName(t, 'BNU', 'Bengaluru Urban') }); });
-    return () => { live = false; };
-  }, [user?.districtId, lang]);
-  return place;
-}
+export { useFarmPlace } from '../utils/farmPlace';
+import { useFarmPlace } from '../utils/farmPlace';
 
 const VERDICT_META: Record<Verdict['id'], { icon: PhIcon; tone: Tone; q: string }> = {
   spray: { icon: SprayBottle, tone: 'plum', q: 'vSpray' },

@@ -19,7 +19,7 @@ import { speak, stopSpeaking } from '../utils/speech';
 import { BookCover, requestOpenBook } from './Library';
 import { Book, LibraryService } from '../services/libraryService';
 import { LivingSky } from './LivingSky';
-import { useFarmPlace } from './SmartWeather';
+import { useFarmPlace } from '../utils/farmPlace';
 
 export { wxWord };
 
@@ -176,7 +176,7 @@ const Home: React.FC<{ lang: Language; user: Farmer; onNavigate: (v: NavView) =>
                   <span className="font-display text-5xl font-semibold leading-none tabular-nums">{wx.now.temp}°</span>
                   <span className="text-xl font-semibold">{wxWord(t, wx.now.code)}</span>
                 </span>
-                <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1 text-agri-50 whitespace-nowrap">
+                <span className="mt-2 inline-flex items-center gap-1.5 rounded-2xl bg-black/20 px-3 py-1 text-agri-50 max-w-full">
                   <Drop size={18} weight="duotone" className="text-sky-200" aria-hidden />{fmt(t.rainChance, { n: wx.now.rainPctToday })}
                 </span>
               </span>
@@ -199,7 +199,7 @@ const Home: React.FC<{ lang: Language; user: Farmer; onNavigate: (v: NavView) =>
               <li key={it.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 bg-paper border border-gray-200 border-l-[6px] rounded-[20px] p-4 shadow-soft ${it.level === 'danger' ? 'border-l-clay-600' : it.level === 'warning' ? 'border-l-gold-500' : 'border-l-agri-600'}`}>
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <IconChip icon={it.icon} tone={it.tone} />
-                  <p className={`flex-1 text-lg leading-snug ${it.level === 'danger' ? 'text-clay-700 font-semibold' : 'text-ink'}`}>{it.text}</p>
+                  <p className={`flex-1 min-w-0 text-lg leading-snug ${it.level === 'danger' ? 'text-clay-700 font-semibold' : 'text-ink'}`}>{it.text}</p>
                 </div>
                 <button type="button" onClick={() => onNavigate(it.go)}
                   className={`shrink-0 min-h-[48px] px-4 rounded-2xl font-bold flex items-center justify-center gap-1.5 ${it.level === 'danger' ? 'bg-agri-700 text-white hover:bg-agri-800' : 'bg-paper border-2 border-agri-700 text-agri-800'}`}>
