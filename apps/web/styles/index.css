@@ -20,6 +20,7 @@
   --color-ink: var(--ink);
   --color-gold-100: var(--gold-100); --color-gold-300: var(--gold-300);
   --color-gold-500: var(--gold-500); --color-gold-700: var(--gold-700);
+  --color-clay-50: var(--clay-50); --color-clay-600: var(--clay-600); --color-clay-700: var(--clay-700);
 
   /* semantic utilities: bg-surface, text-muted, border-subtle, ring-focus ... */
   --color-bg: var(--bg);

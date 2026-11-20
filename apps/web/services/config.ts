@@ -3,7 +3,6 @@
 const env = (import.meta as any).env || {};
 
 export const API_BASE = '/api'; // proxied to the AgriQNet API by Vite (see vite.config.ts)
-export const WEATHER_APP_URL: string = env.VITE_WEATHER_APP_URL || 'http://localhost:5175';
 export const AGRI_RAG_URL: string = env.VITE_AGRI_RAG_URL || 'http://localhost:8003';
 
 /** Signed session token saved at login (lets officers approve/cancel alerts). */
