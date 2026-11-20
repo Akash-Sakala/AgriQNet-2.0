@@ -173,7 +173,7 @@ const AlertNetwork: React.FC<{ lang: Language; user: Farmer; onBack: () => void 
           {/* District details */}
           <div className="bg-paper rounded-3xl shadow-soft border border-gray-100 p-6">
             {!sel ? (
-              <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 py-12">
+              <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 py-12">
                 <MapPin size={40} className="mb-3 opacity-40" />
                 <p className="text-base">{t.tapDistrict}</p>
               </div>
@@ -188,7 +188,7 @@ const AlertNetwork: React.FC<{ lang: Language; user: Farmer; onBack: () => void 
                       </span>
                     ) : <span className="inline-block mt-2 px-3 py-1 rounded-full text-sm font-bold bg-green-50 text-green-700">{t.zoneNone}</span>}
                   </div>
-                  <button onClick={() => setSelected(null)} aria-label={t.close} className="text-gray-400 hover:text-gray-600"><X size={22} /></button>
+                  <button onClick={() => setSelected(null)} aria-label={t.close} className="text-gray-500 hover:text-gray-600"><X size={22} /></button>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {officer && <div className="bg-gray-50 rounded-xl p-3"><p className="text-gray-500">{t.statFarmers}</p><p className="font-bold text-lg">{numFmt.format(farmerCount[sel.id] || 0)}</p></div>}
@@ -429,7 +429,7 @@ const FarmersTab: React.FC<{
     <div className="bg-paper rounded-3xl shadow-soft border border-gray-100 p-4 md:p-6 space-y-4">
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-3.5 text-gray-400" />
+          <Search size={16} className="absolute left-3 top-3.5 text-gray-500" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.searchFarmers} className="w-full pl-9 p-3 bg-gray-50 border border-gray-200 rounded-xl" />
         </div>
         <select value={district} onChange={(e) => setDistrict(e.target.value)} className="p-3 bg-gray-50 border border-gray-200 rounded-xl">

@@ -774,5 +774,11 @@
   "fallbackTip2": "Spray only when there is no rain coming and little wind, in the morning or evening.",
   "fallbackTip3T": "Keep a record",
   "fallbackTip3": "Write down the seeds, fertilizer and sprays you use, with dates.",
-  "adviceSlow": "Advice for this week is taking a while. Meanwhile, these tips help in every season:"
+  "adviceSlow": "Advice for this week is taking a while. Meanwhile, these tips help in every season:",
+  "sunlightMode": "Sunlight mode",
+  "sunlightOn": "Sunlight mode on. Stronger colours for reading outdoors.",
+  "sunlightOff": "Sunlight mode off.",
+  "reduceMotion": "Reduce motion",
+  "reduceMotionHint": "Fewer animations. Better on older phones.",
+  "display": "Display"
 }

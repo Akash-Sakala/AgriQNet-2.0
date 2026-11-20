@@ -80,9 +80,9 @@ export const MicButton: React.FC<{ lang: Language; onText: (text: string, final:
 /** Text input with a microphone on the right. */
 export const VoiceField: React.FC<{ lang: Language; value: string; onChange: (v: string) => void; placeholder?: string; icon?: React.ReactNode; type?: string }> = ({ lang, value, onChange, placeholder, icon, type = 'text' }) => (
   <div className="flex items-center gap-2 bg-paper border border-gray-200 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-agri-400">
-    {icon && <span className="text-gray-400 shrink-0">{icon}</span>}
+    {icon && <span className="text-gray-500 shrink-0">{icon}</span>}
     <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-      className="flex-1 min-w-0 bg-transparent outline-hidden text-lg text-gray-900 placeholder-gray-400 py-2" />
+      className="flex-1 min-w-0 bg-transparent outline-hidden text-lg text-gray-900 placeholder:text-gray-500 py-2" />
     <MicButton lang={lang} onText={(txt) => onChange(txt)} />
   </div>
 );
@@ -149,7 +149,7 @@ export const ScreenTitle: React.FC<{ lang: Language; icon: string; title: string
 
 /** Plain-language step label: big number circle + text. */
 export const Step: React.FC<{ n: number; title: string; done?: boolean; active?: boolean }> = ({ n, title, done, active }) => (
-  <div className={`flex items-center gap-2 ${active ? 'text-gray-900' : 'text-gray-400'}`}>
+  <div className={`flex items-center gap-2 ${active ? 'text-gray-900' : 'text-gray-500'}`}>
     <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${done ? 'bg-agri-700 text-white' : active ? 'bg-gold-500 text-ink' : 'bg-gray-200 text-gray-500'}`}>{done ? <Check size={16} strokeWidth={3} /> : n}</span>
     <span className="font-semibold text-sm hidden sm:inline">{title}</span>
   </div>

@@ -58,9 +58,9 @@ const FarmAlertsPanel: React.FC<{ user?: Farmer | null; lang: Language }> = ({ u
         <div className="flex items-center gap-2 mb-4">
           <CloudLightning className="text-blue-500" size={22} />
           <h3 className="font-bold text-lg text-gray-800">{t.weatherAlertsTitle}</h3>
-          <span className="ml-auto text-xs text-gray-400 text-right">{place} · {t.next7Days}</span>
+          <span className="ml-auto text-xs text-gray-500 text-right">{place} · {t.next7Days}</span>
         </div>
-        {!weather && !weatherErr && <Loader2 className="animate-spin text-gray-400" />}
+        {!weather && !weatherErr && <Loader2 className="animate-spin text-gray-500" />}
         {weatherErr && <p className="text-sm text-red-500">{t.errServer}</p>}
         {weather && weather.alerts.length === 0 && (
           <p className="text-base text-green-700 bg-green-50 border border-green-100 rounded-xl p-3">✅ {t.noWeatherRisk}</p>
@@ -90,7 +90,7 @@ const FarmAlertsPanel: React.FC<{ user?: Farmer | null; lang: Language }> = ({ u
                   <p className="font-semibold text-gray-800 truncate">{a.pestLocal}</p>
                   <p className="text-gray-500 text-xs truncate">{districtName(t, a.reportedDistrictId)}</p>
                 </div>
-                <span className="ml-auto text-xs text-gray-400 shrink-0">{dateFmt.format(new Date(a.reportedAt))}</span>
+                <span className="ml-auto text-xs text-gray-500 shrink-0">{dateFmt.format(new Date(a.reportedAt))}</span>
               </li>
             ))}
           </ul>
@@ -103,7 +103,7 @@ const FarmAlertsPanel: React.FC<{ user?: Farmer | null; lang: Language }> = ({ u
           <Activity className="text-agri-600" size={22} />
           <h3 className="font-bold text-lg text-gray-800">{t.serviceStatus}</h3>
         </div>
-        {!health ? <Loader2 className="animate-spin text-gray-400" /> : health.api === 'down' ? (
+        {!health ? <Loader2 className="animate-spin text-gray-500" /> : health.api === 'down' ? (
           <p className="text-sm text-red-500">{t.errServer}</p>
         ) : (
           <ul className="space-y-2">

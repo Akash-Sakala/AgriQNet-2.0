@@ -109,7 +109,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user }) => {
         <div className="bg-white p-6 rounded-3xl shadow-xs border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-lg text-gray-800">{t.yieldProj}</h3>
-            <button className="p-2 hover:bg-gray-50 rounded-lg"><TrendingUp size={20} className="text-gray-400" /></button>
+            <button className="p-2 hover:bg-gray-50 rounded-lg"><TrendingUp size={20} className="text-gray-500" /></button>
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>

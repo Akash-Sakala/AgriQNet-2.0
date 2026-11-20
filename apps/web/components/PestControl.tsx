@@ -139,7 +139,7 @@ const PestControl: React.FC<PestControlProps> = ({ lang }) => {
               </div>
               <div className="text-center">
                 <p className="font-semibold text-gray-700">{t.upload}</p>
-                <p className="text-sm text-gray-400">{t.uploadFormats}</p>
+                <p className="text-sm text-gray-500">{t.uploadFormats}</p>
               </div>
             </div>
           )}
@@ -169,7 +169,7 @@ const PestControl: React.FC<PestControlProps> = ({ lang }) => {
         {/* Results Section */}
         <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden">
           {!result && !loading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-white z-10">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-white z-10">
               <Bug size={64} className="mb-4 opacity-20" />
               <p>{t.analysisPlaceholder}</p>
             </div>

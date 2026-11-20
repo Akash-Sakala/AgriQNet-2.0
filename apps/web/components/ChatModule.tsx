@@ -298,7 +298,7 @@ const ChatModule: React.FC<ChatModuleProps> = ({ lang, user, onBack, onNavigate 
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder={t.typeOrSpeak}
-              className="flex-1 bg-transparent px-3 py-4 outline-hidden text-lg text-gray-800 placeholder-gray-400 min-w-0"
+              className="flex-1 bg-transparent px-3 py-4 outline-hidden text-lg text-gray-800 placeholder:text-gray-500 min-w-0"
             />
             
             <button 

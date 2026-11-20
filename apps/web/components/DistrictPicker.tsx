@@ -32,7 +32,7 @@ const DistrictPicker: React.FC<{ lang: Language; value: string; onChange: (id: s
           <span className="block text-lg font-bold text-gray-900 leading-snug">{current ? label(current) : t.chooseDistrict}</span>
           {current && lang !== 'en' && <span className="block text-sm text-gray-500">{current.name}</span>}
         </span>
-        <ChevronRight className="text-gray-400 shrink-0" />
+        <ChevronRight className="text-gray-500 shrink-0" />
       </button>
 
       {open && (
@@ -40,7 +40,7 @@ const DistrictPicker: React.FC<{ lang: Language; value: string; onChange: (id: s
           <div className="p-4 border-b border-gray-100 flex items-center gap-3">
             <button onClick={() => setOpen(false)} aria-label={t.close} className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center shrink-0"><X /></button>
             <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl pl-3 pr-1.5 py-1.5">
-              <Search size={20} className="text-gray-400" />
+              <Search size={20} className="text-gray-500" />
               <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.searchDistrict} className="flex-1 min-w-0 bg-transparent outline-hidden text-lg py-1.5" />
               <MicButton lang={lang} onText={(txt) => setQ(txt)} />
             </div>

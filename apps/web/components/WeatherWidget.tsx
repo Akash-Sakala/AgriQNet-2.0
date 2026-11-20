@@ -31,7 +31,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lang, user }) => {
     
     // Fog (45, 48)
     if (code >= 45 && code <= 48) 
-      return <Cloud size={size} className="text-gray-300 animate-pulse" style={{ animationDuration: '6s' }} />;
+      return <Cloud size={size} className="text-gray-500 animate-pulse" style={{ animationDuration: '6s' }} />;
     
     // Rain / Drizzle (51-67, 80-82)
     if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) 
@@ -253,7 +253,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lang, user }) => {
         </div>
         <div className="flex flex-col items-center border-l border-white/20">
           <Wind size={20} className="mb-1 text-blue-200" />
-          <span className="text-sm font-semibold">{weather.windSpeed} <span className="text-[10px]">{t.kmh}</span></span>
+          <span className="text-sm font-semibold">{weather.windSpeed} <span className="text-[13px]">{t.kmh}</span></span>
           <span className="text-xs text-blue-200">{t.wind}</span>
         </div>
         <div className="flex flex-col items-center border-l border-white/20">

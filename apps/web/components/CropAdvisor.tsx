@@ -363,7 +363,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                       <div className="flex items-start gap-3 p-3 bg-paper border border-gray-100 rounded-xl shadow-soft">
                         <div className="p-2 bg-agri-100 text-agri-700 rounded-lg"><Droplets size={18} /></div>
                         <div>
-                          <span className="text-xs text-gray-400 font-bold uppercase">{t.waterNeeds}</span>
+                          <span className="text-xs text-gray-500 font-bold uppercase">{t.waterNeeds}</span>
                           <p className="text-sm font-medium text-gray-700">{selectedCrop.requirements.water}</p>
                         </div>
                       </div>
@@ -372,7 +372,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                       <div className="flex items-start gap-3 p-3 bg-paper border border-gray-100 rounded-xl shadow-soft">
                         <div className="p-2 bg-gold-100 text-gold-700 rounded-lg"><Sun size={18} /></div>
                         <div>
-                          <span className="text-xs text-gray-400 font-bold uppercase">{t.sunlight}</span>
+                          <span className="text-xs text-gray-500 font-bold uppercase">{t.sunlight}</span>
                           <p className="text-sm font-medium text-gray-700">{selectedCrop.requirements.sun}</p>
                         </div>
                       </div>
@@ -381,7 +381,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                       <div className="flex items-start gap-3 p-3 bg-paper border border-gray-100 rounded-xl shadow-soft">
                         <div className="p-2 bg-amber-100 text-amber-700 rounded-lg"><MapPin size={18} /></div>
                         <div>
-                          <span className="text-xs text-gray-400 font-bold uppercase">{t.soilPref}</span>
+                          <span className="text-xs text-gray-500 font-bold uppercase">{t.soilPref}</span>
                           <p className="text-sm font-medium text-gray-700">{selectedCrop.requirements.soil}</p>
                         </div>
                       </div>
@@ -520,7 +520,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
           {mode === 'ml' ? (
              <div className="h-full">
                 {!mlResult && !loading && (
-                   <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-white/50 border-2 border-dashed border-agri-200 rounded-3xl p-12">
+                   <div className="h-full flex flex-col items-center justify-center text-gray-500 bg-white/50 border-2 border-dashed border-agri-200 rounded-3xl p-12">
                      <BrainCircuit size={48} className="mb-4 text-agri-300" />
                      <p className="text-lg text-center max-w-sm">{t.precisionDesc}</p>
                    </div>
@@ -573,8 +573,8 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                 </div>
               )}
               {recommendations.length === 0 && !loading ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-white/50 border-2 border-dashed border-gray-200 rounded-3xl p-12">
-                  <Sprout size={48} className="mb-4 text-gray-300" />
+                <div className="h-full flex flex-col items-center justify-center text-gray-500 bg-white/50 border-2 border-dashed border-gray-200 rounded-3xl p-12">
+                  <Sprout size={48} className="mb-4 text-gray-500" />
                   <p className="text-lg text-center">{t.noCrops}</p>
                 </div>
               ) : (
@@ -601,7 +601,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                             <h3 className="text-xl font-bold text-gray-800 mb-1">{crop.name}</h3>
                             <SpeakButton text={[crop.name, crop.description, crop.requirements.water, crop.growthPeriod].filter(Boolean).join('. ')} lang={lang} size="sm" />
                           </div>
-                          <p className="text-xs text-gray-400 italic mb-3">{crop.scientificName}</p>
+                          <p className="text-xs text-gray-500 italic mb-3">{crop.scientificName}</p>
                           
                           <p className="text-gray-700 text-base mb-4 line-clamp-3">{crop.description}</p>
                           

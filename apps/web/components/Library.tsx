@@ -70,16 +70,16 @@ export const BookCover: React.FC<{ book: Book; lang: Language; size?: 'sm' | 'md
           <>
             <span aria-hidden className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-3 pl-4">
-              {book.publisher && <p className="text-[10px] uppercase tracking-[0.14em] text-gold-300 font-semibold mb-1 truncate">{book.publisher}</p>}
+              {book.publisher && <p className="text-[13px] uppercase tracking-[0.14em] text-gold-300 font-semibold mb-1 truncate">{book.publisher}</p>}
               <p className={`font-display font-semibold text-white leading-snug line-clamp-4 ${titleSize}`}>{title}</p>
             </div>
           </>
         )}
         <span className="absolute top-2 left-3 inline-flex items-center gap-1 rounded-full bg-paper/90 backdrop-blur px-1.5 py-1 shadow-xs" title={(t as any)[`cat_${book.category}`]}>
           <c.icon size={14} weight="duotone" style={{ color: TONES[c.tone].fg }} aria-hidden />
-          {book.kind === 'article' && <span className="text-[10px] font-bold text-gray-700 pr-0.5">{t.libArticle}</span>}
+          {book.kind === 'article' && <span className="text-[13px] font-bold text-gray-700 pr-0.5">{t.libArticle}</span>}
         </span>
-        {book.status === 'hidden' && <span className="absolute top-2 right-2 rounded-full bg-red-600 text-white text-[10px] font-bold px-2 py-1">{t.libHidden}</span>}
+        {book.status === 'hidden' && <span className="absolute top-2 right-2 rounded-full bg-red-600 text-white text-[13px] font-bold px-2 py-1">{t.libHidden}</span>}
       </div>
       {caption && (
         <div className="mt-2 pr-1">
@@ -224,7 +224,7 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
                         return (
                           <button onClick={() => { if (s) { setFlash(`${m.id}-${n}`); setTimeout(() => setFlash(null), 1600); } }}
                             title={s ? `${s.title} · ${fmt(t.libPage, { n: s.page })}` : ''}
-                            className="inline-flex items-center justify-center align-super ml-0.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-gold-100 text-gold-700 text-[11px] font-bold leading-none hover:bg-gold-300">{n}</button>
+                            className="inline-flex items-center justify-center align-super ml-0.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-gold-100 text-gold-700 text-[13px] font-bold leading-none hover:bg-gold-300">{n}</button>
                         );
                       },
                     }}>{citeLinks(m.text)}</ReactMarkdown>
@@ -242,7 +242,7 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
                         {m.sources.map((s) => (
                           <div key={s.n} className={`rounded-xl border bg-paper p-2.5 transition-colors ${flash === `${m.id}-${s.n}` ? 'border-gold-500 bg-gold-100/50' : 'border-gray-200'}`}>
                             <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-gold-100 text-gold-700 text-[11px] font-bold flex items-center justify-center shrink-0">{s.n}</span>
+                              <span className="w-5 h-5 rounded-full bg-gold-100 text-gold-700 text-[13px] font-bold flex items-center justify-center shrink-0">{s.n}</span>
                               <button onClick={() => openSource(s)} className="text-sm font-semibold text-agri-800 hover:underline inline-flex items-center gap-1">
                                 <FilePdf size={16} weight="duotone" />{s.kind === 'article' ? t.libOpenSource : fmt(t.libPage, { n: s.page })}
                               </button>
@@ -281,7 +281,7 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
         <div className="flex items-center gap-2 bg-gray-50 rounded-full border border-gray-200 focus-within:ring-2 focus-within:ring-agri-200 pl-1.5 pr-1.5">
           <MicButton lang={lang} onText={(txt) => setInput(txt)} />
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
-            placeholder={book ? t.libAskPlaceholder : t.libAskAllPlaceholder} className="flex-1 min-w-0 bg-transparent py-3.5 outline-hidden text-lg placeholder-gray-400" />
+            placeholder={book ? t.libAskPlaceholder : t.libAskAllPlaceholder} className="flex-1 min-w-0 bg-transparent py-3.5 outline-hidden text-lg placeholder:text-gray-500" />
           <button onClick={() => send()} disabled={!input.trim() || busy} aria-label={t.send || 'Send'}
             className="w-11 h-11 rounded-full bg-agri-700 text-white flex items-center justify-center disabled:bg-gray-300 shrink-0"><Send size={18} /></button>
         </div>
@@ -429,7 +429,7 @@ const AddBook: React.FC<{ lang: Language; onClose: () => void; onOpenBook: (id: 
                 const done = job.status === 'ready' || i < stageIdx;
                 const active = i === stageIdx && ['queued', 'running'].includes(job.status);
                 return (
-                  <li key={s} className={`flex items-center gap-3 ${done || active ? 'text-gray-900' : 'text-gray-400'}`}>
+                  <li key={s} className={`flex items-center gap-3 ${done || active ? 'text-gray-900' : 'text-gray-500'}`}>
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${done ? 'bg-agri-700 text-white' : active ? 'bg-gold-500 text-ink' : 'bg-gray-200'}`}>
                       {done ? <CheckCircle size={18} weight="fill" /> : active ? <Loader2 size={15} className="animate-spin" /> : null}
                     </span>

@@ -21,7 +21,9 @@ import { ChoiceGrid } from './components/ui/Kit';
 import { ScreenErrorBoundary } from './components/ui/ScreenErrorBoundary';
 import { cropChoices } from './utils/farmOptions';
 import { DBService } from './services/dbService';
-import { stopSpeaking } from './utils/speech';
+import { stopSpeaking, speak } from './utils/speech';
+import { useDisplayPrefs } from './utils/displayPrefs';
+import { Sun, PersonSimpleWalk } from '@phosphor-icons/react';
 
 /** Every screen, in menu order: picture + words (the bottom bar shows the first five). */
 const NAV: { id: NavView; key: string }[] = [
@@ -54,6 +56,8 @@ const App: React.FC = () => {
   const [farmOpen, setFarmOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const t = getTranslation(activeLang);
+  const display = useDisplayPrefs();
+  const toggleSun = () => { const on = !display.prefs.sun; display.toggleSun(); speak(on ? (t as any).sunlightOn : (t as any).sunlightOff, activeLang, 'display'); };
 
   useEffect(() => { document.documentElement.lang = activeLang; }, [activeLang]);
 
@@ -151,7 +155,7 @@ const App: React.FC = () => {
   );
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion={display.prefs.reduceMotion ? 'always' : 'user'}>
     <div className="min-h-screen bg-cream flex font-sans text-ink">
       <TourGuide steps={tourSteps} isOpen={tourOpen} onClose={() => setTourOpen(false)} lang={activeLang} onStepChange={() => { if (view !== 'home') setView('home'); }} />
 
@@ -167,7 +171,7 @@ const App: React.FC = () => {
             <span className="flex items-center gap-1 font-semibold text-gray-900 truncate">{user.name}{user.role === 'officer' && <Ico icon={IdentificationBadge} size={18} tone="forest" />}</span>
             <span className="flex items-center gap-1 text-sm text-gray-600 truncate"><Ico icon={PinIcon} size={15} tone="forest" />{place}</span>
           </span>
-          <Settings2 size={18} className="text-gray-400" />
+          <Settings2 size={18} className="text-gray-500" />
         </button>
         <nav id="main-nav-desktop" className="flex-1 space-y-1 overflow-y-auto">
           {NAV.map((n) => {
@@ -182,7 +186,10 @@ const App: React.FC = () => {
             );
           })}
         </nav>
-        <button onClick={logout} className="mt-3 flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-2xl font-semibold"><LogOut size={20} />{t.logout}</button>
+        <div className="mt-3 pt-3 border-t border-gray-200 space-y-1" role="group" aria-label={(t as any).display}>
+          <DisplaySwitch icon={<PersonSimpleWalk size={22} weight="duotone" aria-hidden />} label={(t as any).reduceMotion} on={display.prefs.reduceMotion} onToggle={display.toggleMotion} />
+        </div>
+        <button onClick={logout} className="mt-1 flex items-center gap-3 px-4 py-3 text-red-700 hover:bg-red-50 rounded-2xl font-semibold"><LogOut size={20} />{t.logout}</button>
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">
@@ -198,6 +205,10 @@ const App: React.FC = () => {
               <HelpCircle size={20} /><span className="hidden md:inline">{t.takeTour}</span>
             </button>
           )}
+          <button type="button" onClick={toggleSun} aria-pressed={display.prefs.sun} aria-label={(t as any).sunlightMode} title={(t as any).sunlightMode}
+            className={`min-h-[44px] min-w-[44px] flex items-center justify-center gap-2 px-2.5 md:px-3 rounded-2xl border font-semibold transition-colors ${display.prefs.sun ? 'bg-gold-300 border-ink text-ink' : 'bg-paper border-gray-200 text-agri-800 hover:border-agri-400'}`}>
+            <Sun size={22} weight={display.prefs.sun ? 'fill' : 'duotone'} aria-hidden /><span className="hidden md:inline">{(t as any).sunlightMode}</span>
+          </button>
           {LangButton}
           <button onClick={() => setMenuOpen(true)} aria-label={t.menu} className="lg:hidden w-11 h-11 rounded-2xl bg-paper border border-gray-200 flex items-center justify-center"><Menu /></button>
         </header>
@@ -227,7 +238,7 @@ const App: React.FC = () => {
                 {on && <motion.span layoutId="tab-pill" className="absolute inset-0 rounded-full bg-agri-100" transition={{ type: 'spring', stiffness: 480, damping: 36 }} />}
                 <I size={24} weight={on ? 'fill' : 'duotone'} className="relative" style={{ color: on ? TONES[SCREEN[id].tone].fg : undefined }} aria-hidden />
               </span>
-              <span className={`text-[11px] mt-0.5 leading-tight text-center px-0.5 ${on ? 'font-semibold' : ''}`}>{(t as any)[n.key]}</span>
+              <span className={`text-[13px] mt-0.5 leading-tight text-center px-0.5 ${on ? 'font-semibold' : ''}`}>{(t as any)[n.key]}</span>
             </button>
           );
         })}
@@ -252,6 +263,11 @@ const App: React.FC = () => {
                 <IconChip icon={SCREEN[n.id].icon} tone={SCREEN[n.id].tone} size="sm" />{(t as any)[n.key]}
               </button>
             ))}
+            {/* Display: Sunlight + Reduce motion */}
+            <div className="mt-3 pt-3 border-t border-gray-200 space-y-1" role="group" aria-label={(t as any).display}>
+              <DisplaySwitch icon={<Sun size={22} weight="duotone" aria-hidden />} label={(t as any).sunlightMode} on={display.prefs.sun} onToggle={toggleSun} />
+              <DisplaySwitch icon={<PersonSimpleWalk size={22} weight="duotone" aria-hidden />} label={(t as any).reduceMotion} hint={(t as any).reduceMotionHint} on={display.prefs.reduceMotion} onToggle={display.toggleMotion} />
+            </div>
             <button onClick={logout} className="w-full mt-3 flex items-center gap-3 px-3 py-3 text-red-700 rounded-2xl font-semibold"><LogOut />{t.logout}</button>
           </motion.div>
         </motion.div>
@@ -265,6 +281,17 @@ const App: React.FC = () => {
     </MotionConfig>
   );
 };
+
+/** A labelled on/off switch row (role="switch"), used for Sunlight and Reduce motion. */
+const DisplaySwitch: React.FC<{ icon: React.ReactNode; label: string; hint?: string; on: boolean; onToggle: () => void }> = ({ icon, label, hint, on, onToggle }) => (
+  <button type="button" role="switch" aria-checked={on} onClick={onToggle} className="w-full min-h-[52px] flex items-center gap-3 px-3 py-2 rounded-2xl text-left hover:bg-gray-100">
+    <span className="text-agri-800 shrink-0">{icon}</span>
+    <span className="flex-1 min-w-0"><span className="block font-semibold text-ink">{label}</span>{hint && <span className="block text-[15px] text-gray-600 leading-snug">{hint}</span>}</span>
+    <span aria-hidden className={`relative w-12 h-7 rounded-full shrink-0 transition-colors ${on ? 'bg-agri-700' : 'bg-gray-300'}`}>
+      <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
+    </span>
+  </button>
+);
 
 /** Change district and crops (drives weather, alerts and advice). */
 const MyFarm: React.FC<{ lang: Language; user: Farmer; onClose: () => void; onSaved: (u: Farmer) => void }> = ({ lang, user, onClose, onSaved }) => {

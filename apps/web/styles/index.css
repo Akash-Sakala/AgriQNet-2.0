@@ -43,6 +43,11 @@
   --font-sans: 'Inter', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif;
   --font-display: 'Fraunces', 'Noto Serif Kannada', 'Noto Serif Telugu', 'Noto Serif Devanagari', Georgia, serif;
 
+  /* Type floor for low-literacy readers (MASTER §3): nothing under 15px, body 18px */
+  --text-xs: 0.9375rem; --text-xs--line-height: 1.35;
+  --text-sm: 1rem; --text-sm--line-height: 1.45;
+  --text-base: 1.125rem; --text-base--line-height: 1.55;
+
   --shadow-soft: var(--elev-soft);
   --shadow-lift: var(--elev-lift);
 }
@@ -55,6 +60,8 @@
 
   html { background-color: var(--bg); }
   body {
+    font-size: var(--text-body);
+    line-height: 1.5;
     font-family: var(--font-sans);
     background-color: var(--bg);
     color: var(--text);
@@ -76,7 +83,11 @@
 [data-theme="sun"] {
   .backdrop-blur-md, .backdrop-blur-xs, .backdrop-blur { backdrop-filter: none; }
   /* light card/control edges become solid dark lines (backgrounds keep their light greys) */
-  :is(.border-gray-100, .border-gray-200, .border-gray-300, .border-agri-100, .border-agri-200, .border-agri-300) { border-color: #0F1A14; }
+  :is(.border-gray-100, .border-gray-200, .border-gray-300, .border-agri-100, .border-agri-200, .border-agri-300) {
+    border-top-color: #0F1A14; border-right-color: #0F1A14; border-bottom-color: #0F1A14;
+  }
+  /* keep coloured severity stripes (border-l-*) */
+  :is(.border-gray-100, .border-gray-200, .border-gray-300, .border-agri-100, .border-agri-200, .border-agri-300):not([class*="border-l-"]) { border-left-color: #0F1A14; }
   :is(button, input, select, textarea):is(.border, .border-2) { border-width: 2px; }
 }
 

@@ -71,7 +71,7 @@ const PestAlerts: React.FC<{ lang: Language; user: Farmer; onBack: () => void; o
       <section className="bg-paper rounded-3xl border border-gray-200 shadow-soft p-5">
         <h2 className="text-xl font-semibold text-ink mb-4 flex items-center gap-3"><IconChip icon={Bug} tone="rust" size="sm" />{fmt(t.pestNearTitle, { district: place })}</h2>
         {err && <p className="text-red-600">{t.errServer}</p>}
-        {!alerts && !err && <Loader2 className="animate-spin text-gray-400" />}
+        {!alerts && !err && <Loader2 className="animate-spin text-gray-500" />}
         {alerts && near.length === 0 && <p className="flex items-center gap-2 text-lg text-agri-800 bg-agri-50 border border-agri-100 rounded-2xl p-4"><Ico icon={CheckCircleD} size={24} />{t.noPestNear}</p>}
         <ul className="space-y-2">
           {near.map((a) => (
@@ -159,7 +159,7 @@ const SmsSignup: React.FC<{ lang: Language; user: Farmer }> = ({ lang, user }) =
           <span className="block text-xl font-bold text-gray-900">{t.smsBasicTitle}</span>
           <span className="block text-gray-600">{t.smsBasicDesc}</span>
         </span>
-        <ChevronRight className={`text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} />
+        <ChevronRight className={`text-gray-500 transition-transform ${open ? 'rotate-90' : ''}`} />
       </button>
       {open && (
         <div className="mt-4 space-y-3">
@@ -168,7 +168,7 @@ const SmsSignup: React.FC<{ lang: Language; user: Farmer }> = ({ lang, user }) =
           ) : step === 'input' ? (
             <>
               <div className="flex items-center gap-2 bg-paper border border-gray-200 rounded-2xl px-4">
-                <Phone size={20} className="text-gray-400" />
+                <Phone size={20} className="text-gray-500" />
                 <input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.mobileNumber} className="flex-1 bg-transparent outline-hidden text-lg py-3.5" />
               </div>
               <DistrictPicker lang={lang} value={districtId} onChange={setDistrictId} />
