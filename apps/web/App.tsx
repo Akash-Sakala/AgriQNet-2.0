@@ -23,6 +23,7 @@ import { cropChoices } from './utils/farmOptions';
 import { DBService } from './services/dbService';
 import { stopSpeaking, speak } from './utils/speech';
 import { useDisplayPrefs } from './utils/displayPrefs';
+import { Toaster } from 'sonner';
 import { Sun, PersonSimpleWalk } from '@phosphor-icons/react';
 
 /** Every screen, in menu order: picture + words (the bottom bar shows the first five). */
@@ -157,6 +158,10 @@ const App: React.FC = () => {
   return (
     <MotionConfig reducedMotion={display.prefs.reduceMotion ? 'always' : 'user'}>
     <div className="min-h-screen bg-cream flex font-sans text-ink">
+      <Toaster position="top-center" offset={16} toastOptions={{
+        style: { background: 'var(--ink)', color: '#fff', border: 0, borderRadius: 16, fontSize: '1.0625rem', fontFamily: 'var(--font-sans)', padding: '14px 16px' },
+        actionButtonStyle: { background: 'var(--gold-300)', color: 'var(--ink)', fontWeight: 700, borderRadius: 10, height: 44, padding: '0 16px', fontSize: '1rem' },
+      }} />
       <TourGuide steps={tourSteps} isOpen={tourOpen} onClose={() => setTourOpen(false)} lang={activeLang} onStepChange={() => { if (view !== 'home') setView('home'); }} />
 
       {/* Desktop sidebar */}

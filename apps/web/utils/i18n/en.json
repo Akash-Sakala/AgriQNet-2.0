@@ -780,5 +780,20 @@
   "sunlightOff": "Sunlight mode off.",
   "reduceMotion": "Reduce motion",
   "reduceMotionHint": "Fewer animations. Better on older phones.",
-  "display": "Display"
+  "display": "Display",
+  "askPlaceholder": "Ask your question",
+  "tapToSpeak": "Tap to speak",
+  "listening": "Listening… speak now",
+  "sendingSoon": "Sending your question…",
+  "sendNow": "Send",
+  "newChat": "New chat",
+  "chatCleared": "Chat cleared.",
+  "undo": "Undo",
+  "modeGeneralShort": "Any question",
+  "modeLibraryShort": "Farm books",
+  "sugFert": "Which fertilizer for {crop} now?",
+  "sugPest": "How do I stop pests on {crop}?",
+  "sugSow": "When should I sow {crop}?",
+  "sugRain": "Will it rain this week in {district}?",
+  "micUnsupported": "Voice input does not work in this browser. Please type your question."
 }

@@ -149,3 +149,8 @@
 @media (prefers-reduced-motion: reduce) {
   .living-sky * { animation: none !important; }
 }
+
+/* listening ring around the mic */
+@keyframes mic-ring { from { transform: scale(1); opacity: .7; } to { transform: scale(1.45); opacity: 0; } }
+.mic-ring { animation: mic-ring 1.2s var(--ease-standard) infinite; }
+@media (prefers-reduced-motion: reduce) { .mic-ring { animation: none; opacity: .5; } }
