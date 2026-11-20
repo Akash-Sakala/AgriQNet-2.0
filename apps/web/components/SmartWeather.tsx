@@ -14,9 +14,8 @@ import { IconChip, weatherIcon, CloudLightning, Tone } from './ui/Icons';
 import { WorkingOn, InlineError } from './ui/WorkingOn';
 import { Sheet, SheetContent } from './ui/sheet';
 import { Skeleton } from './ui/progress';
-import { wxWord } from './Home';
 import { PlatformService, WeatherAlert } from '../services/platformService';
-import { FarmWeather, Place, Verdict, Level, farmVerdicts, getFarmWeather, searchPlaces } from '../services/weatherService';
+import { FarmWeather, Place, Verdict, Level, farmVerdicts, getFarmWeather, searchPlaces, wxWord } from '../services/weatherService';
 import { SeverityMeter } from './ui/Severity';
 
 /** The farmer's district as a weather place (falls back to Bengaluru Urban). */

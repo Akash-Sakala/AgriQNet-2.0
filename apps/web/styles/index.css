@@ -124,3 +124,17 @@
 @media (prefers-reduced-motion: reduce) {
   .sheet-overlay, .sheet-content { animation: none !important; }
 }
+
+/* Living sky (Home hero): the app's one ambient animation */
+@keyframes sky-drift { from { transform: translateX(-34px); } to { transform: translateX(34px); } }
+@keyframes sky-rain { from { transform: translate(0, -24px); opacity: 0; } 20% { opacity: 1; } to { transform: translate(-10px, 150px); opacity: 0; } }
+@keyframes sky-twinkle { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes sky-glow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.living-sky .sky-drift { animation: sky-drift 50s ease-in-out infinite alternate; }
+.living-sky .sky-rain { animation: sky-rain 0.9s linear infinite; }
+.living-sky .sky-twinkle { animation: sky-twinkle 3.2s ease-in-out infinite; }
+.living-sky .sky-glow { transform-box: fill-box; transform-origin: center; animation: sky-glow 6s ease-in-out infinite; }
+.living-sky[data-paused="true"] * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .living-sky * { animation: none !important; }
+}

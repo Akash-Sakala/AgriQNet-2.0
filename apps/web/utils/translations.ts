@@ -32,6 +32,16 @@ export const getTranslation = (lang: Language): Dict => TRANSLATIONS[lang] || TR
 export const fmt = (template: string, vars: Record<string, string | number> = {}) =>
   String(template ?? '').replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : `{${k}}`));
 
+/** Plural-aware string: keys `<base>_one`, `<base>_few`, `<base>_other` … chosen with Intl.PluralRules,
+ *  falling back to `<base>_other`, then `<base>`. plural(t, lang, 'pestNear', 3) → "3 pest alerts near you" */
+export const plural = (t: Dict, lang: Language, base: string, n: number) => {
+  const rule = new Intl.PluralRules(LOCALES[lang] || 'en').select(n);
+  return fmt(t[`${base}_${rule}`] ?? t[`${base}_other`] ?? t[base] ?? '', { n });
+};
+
+/** First letter upper-case (pest names arrive lower-case in English). Leaves Indic scripts untouched. */
+export const sentenceCase = (s: string) => (s ? s.charAt(0).toLocaleUpperCase() + s.slice(1) : s);
+
 const norm = (s: string) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 /** Localised name of a crop label returned by the ML model / Gemini (English key). */

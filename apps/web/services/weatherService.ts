@@ -2,6 +2,10 @@
 // Data: Open-Meteo (free, no key, CORS-enabled; the API server uses the same source for alerts).
 // Cached per place for 10 minutes so Home and Weather share one download.
 
+/** Weather code (WMO) → word in the farmer's language. */
+export const wxWord = (t: any, code: number) =>
+  code === 0 ? t.wxClear : code <= 3 ? t.wxPartlyCloudy : code <= 48 ? t.wxFog : code <= 67 ? t.wxRain : code <= 77 ? t.wxSnow : code <= 82 ? t.wxShowers : t.wxThunder;
+
 export interface HourPoint { time: number; temp: number; rainPct: number; code: number; wind: number }
 export interface DayPoint { date: number; /* local midnight, epoch ms */ code: number; tMax: number; tMin: number; rainPct: number; rainMm: number; windMax: number }
 export interface FarmWeather {
