@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Image as ImageIcon, RotateCcw, Send, Loader2, Map as MapIcon, Home as HomeIcon } from 'lucide-react';
+import { Camera, Image as ImageIcon, ArrowCounterClockwise as RotateCcw, PaperPlaneRight as Send, CircleNotch as Loader2, MapTrifold as MapIcon, House as HomeIcon } from '@phosphor-icons/react';
 import { Farmer, Language, NavView } from '../types';
-import { getTranslation, fmt, districtName, sentenceCase } from '../utils/translations';
+import { getTranslation, fmt, districtName, sentenceCase, plural } from '../utils/translations';
 import { CameraCapture, canUseCamera } from './CameraCapture';
 import { WorkingOn } from './ui/WorkingOn';
 import { MagnifyingGlass, Bug as BugD, ChatCircleDots } from '@phosphor-icons/react';
@@ -228,7 +228,7 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
           {zones && (
             <p className="flex items-start gap-2 bg-gray-50 rounded-2xl p-3 text-gray-800">
               <Ico icon={DeviceMobile} size={24} tone="forest" className="mt-0.5" />
-              <span>{fmt(t.warnReach, { n: reach })} <span className="text-gray-500">({[...zones.red, ...zones.orange, ...zones.yellow].slice(0, 6).map((id) => districtName(t, id)).join(', ')}{reach > 6 ? '…' : ''})</span></span>
+              <span>{plural(t, lang, 'warnReach', reach)} <span className="text-gray-500">({[...zones.red, ...zones.orange, ...zones.yellow].slice(0, 6).map((id) => districtName(t, id)).join(', ')}{reach > 6 ? '…' : ''})</span></span>
             </p>
           )}
           {!sure && <p className="flex gap-2 bg-gold-100 border border-gold-300 rounded-2xl p-3 text-gold-700"><Ico icon={IdentificationBadge} size={22} />{t.officerWillCheck}</p>}
@@ -247,7 +247,7 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
           {result.outcome === 'sent' && (() => {
             const s = result.stats!;
             const farmers = s.red + s.orange + s.yellow;
-            const msg = fmt(t.outcomeSent, { farmers, districts: result.affectedDistricts?.length || 0 });
+            const msg = plural(t, lang, 'outcomeSent', result.affectedDistricts?.length || 0, { farmers });
             return (
               <>
                 <Celebrate icon={SealCheck} tone="forest" />

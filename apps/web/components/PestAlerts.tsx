@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, CheckCircle, Phone, ChevronRight } from 'lucide-react';
+import { CircleNotch as Loader2, CheckCircle, Phone, CaretRight as ChevronRight } from '@phosphor-icons/react';
 import { Farmer, Language, NavView } from '../types';
 import { getTranslation, fmt, districtName, LOCALES, sentenceCase } from '../utils/translations';
 import { Sheet, SheetContent } from './ui/sheet';

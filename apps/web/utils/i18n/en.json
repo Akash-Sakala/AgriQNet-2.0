@@ -856,5 +856,10 @@
   "nearYouTitle": "Near you",
   "nothingNearYou": "No pest warnings near your farm right now.",
   "pestInDistrict": "{pest} in {district}",
-  "mapHint": "Pinch or tap + to zoom. Tap a district to see details."
+  "mapHint": "Pinch or tap + to zoom. Tap a district to see details.",
+  "warnReach_one": "Farmers in {n} district will get an SMS.",
+  "warnReach_other": "Farmers in {n} districts will get an SMS.",
+  "outcomeSent_one": "Warning sent to {farmers} farmers in {n} district",
+  "outcomeSent_other": "Warning sent to {farmers} farmers in {n} districts",
+  "libForMyCrops": "For your crops"
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Map as MapIcon, Siren, Users, Loader2, X, Plus, Search, MapPin, CheckCircle, Sprout, Bug, MessageSquare, Check, Ban, Send } from 'lucide-react';
+import { MapTrifold as MapIcon, Siren, Users, CircleNotch as Loader2, X, Plus, MagnifyingGlass as Search, MapPin, CheckCircle, Plant as Sprout, Bug, ChatText as MessageSquare, Check, Prohibit as Ban, PaperPlaneRight as Send } from '@phosphor-icons/react';
 import { Language, Farmer } from '../types';
 import { ScreenTitle } from './ui/Kit';
 import { motion, AnimatePresence } from 'motion/react';

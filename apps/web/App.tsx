@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, HelpCircle, LogOut, Menu, X, Loader2, Settings2, Check } from 'lucide-react';
+import { Globe, Question as HelpCircle, SignOut as LogOut, List as Menu, X, CircleNotch as Loader2, SlidersHorizontal as Settings2, Check } from '@phosphor-icons/react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { SCREEN, IconChip, Ico, MapPin as PinIcon, IdentificationBadge, Plant, TONES } from './components/ui/Icons';
 import { NavView, Language, Farmer } from './types';
@@ -24,6 +24,7 @@ import { DBService } from './services/dbService';
 import { stopSpeaking, speak } from './utils/speech';
 import { useDisplayPrefs } from './utils/displayPrefs';
 import { Toaster } from 'sonner';
+import { NavDir, screenVariants } from './components/ui/motion';
 import { Sun, PersonSimpleWalk } from '@phosphor-icons/react';
 
 /** Every screen, in menu order: picture + words (the bottom bar shows the first five). */
@@ -52,6 +53,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<Farmer | null>(() => DBService.getCachedUser());
   const [view, setView] = useState<NavView>('home');
   const [history, setHistory] = useState<NavView[]>([]);
+  const [navDir, setNavDir] = useState<NavDir>('forward');
   const [langOpen, setLangOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [farmOpen, setFarmOpen] = useState(false);
@@ -72,9 +74,10 @@ const App: React.FC = () => {
     if (user?.token && user.lang !== l) DBService.updateProfile({ lang: l }).then(setUser).catch(() => {});
   };
 
-  const go = (v: NavView) => {
+  const go = (v: NavView, dir: NavDir = v === 'home' ? 'back' : 'forward') => {
     if (v === view) return;
     stopSpeaking();
+    setNavDir(dir);
     setHistory((h) => (v === 'home' ? [] : [...h, view]));
     setView(v);
     setMenuOpen(false);
@@ -82,6 +85,7 @@ const App: React.FC = () => {
   };
   const back = () => {
     stopSpeaking();
+    setNavDir('back');
     setHistory((h) => {
       const prev = h[h.length - 1] || 'home';
       setView(prev);
@@ -182,7 +186,7 @@ const App: React.FC = () => {
           {NAV.map((n) => {
             const on = view === n.id;
             return (
-              <button key={n.id} onClick={() => go(n.id)} aria-current={on ? 'page' : undefined}
+              <button key={n.id} onClick={() => go(n.id, 'tab')} aria-current={on ? 'page' : undefined}
                 className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[1.05rem] transition-colors ${on ? 'text-agri-900 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
                 {on && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-2xl bg-agri-50 border border-agri-200" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
                 <IconChip icon={SCREEN[n.id].icon} tone={SCREEN[n.id].tone} size="sm" className="relative" />
@@ -220,8 +224,8 @@ const App: React.FC = () => {
 
         <main className="flex-1 px-4 lg:px-8 pt-4 pb-28 lg:pb-10 max-w-6xl w-full mx-auto">
           {/* Screen change: a short cross-fade with a small rise, so it is clear the page changed */}
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+          <AnimatePresence mode="wait" initial={false} custom={navDir}>
+            <motion.div key={view} custom={navDir} variants={screenVariants} initial="enter" animate="center" exit="exit">
               <ScreenErrorBoundary lang={activeLang} name={view} onHome={view === 'home' ? undefined : () => go('home')}>
                 {screen()}
               </ScreenErrorBoundary>
@@ -237,7 +241,7 @@ const App: React.FC = () => {
           const on = view === id;
           const I = SCREEN[id].icon;
           return (
-            <button key={id} onClick={() => go(id)} aria-current={on ? 'page' : undefined}
+            <button key={id} onClick={() => go(id, 'tab')} aria-current={on ? 'page' : undefined}
               className={`relative flex flex-col items-center justify-center pt-2 pb-1.5 min-h-[66px] ${on ? 'text-agri-800' : 'text-gray-500'}`}>
               <span className="relative px-4 py-1">
                 {on && <motion.span layoutId="tab-pill" className="absolute inset-0 rounded-full bg-agri-100" transition={{ type: 'spring', stiffness: 480, damping: 36 }} />}
@@ -264,7 +268,7 @@ const App: React.FC = () => {
               <span className="flex items-center gap-1.5 font-semibold text-gray-900"><Ico icon={PinIcon} size={18} tone="forest" />{place}</span>
             </button>
             {NAV.map((n) => (
-              <button key={n.id} onClick={() => go(n.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-lg ${view === n.id ? 'bg-agri-50 font-semibold' : ''}`}>
+              <button key={n.id} onClick={() => go(n.id, 'tab')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-lg ${view === n.id ? 'bg-agri-50 font-semibold' : ''}`}>
                 <IconChip icon={SCREEN[n.id].icon} tone={SCREEN[n.id].tone} size="sm" />{(t as any)[n.key]}
               </button>
             ))}
