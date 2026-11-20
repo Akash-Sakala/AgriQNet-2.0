@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Image as ImageIcon, RotateCcw, Send, Loader2, Map as MapIcon, Home as HomeIcon } from 'lucide-react';
 import { Farmer, Language, NavView } from '../types';
-import { getTranslation, fmt, districtName } from '../utils/translations';
+import { getTranslation, fmt, districtName, sentenceCase } from '../utils/translations';
+import { CameraCapture, canUseCamera } from './CameraCapture';
+import { WorkingOn } from './ui/WorkingOn';
+import { MagnifyingGlass, Bug as BugD, ChatCircleDots } from '@phosphor-icons/react';
 import { PlatformService, PestDetection, AlertReport, Edge, pestDictionary, PestInfo, zonesFor } from '../services/platformService';
 import { GeminiService } from '../services/geminiService';
 import { pestLabel, cropGroupLabel, pestTips } from '../utils/pests';
@@ -36,6 +39,7 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
   const [severity, setSeverity] = useState<Sev>('ORANGE');
   const [edges, setEdges] = useState<Edge[]>([]);
   const [result, setResult] = useState<AlertReport | null>(null);
+  const [camOpen, setCamOpen] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -44,6 +48,7 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
 
   const onFile = async (file?: File) => {
     if (!file) return;
+    setCamOpen(false);
     setError('');
     setDet(null);
     setPreview(URL.createObjectURL(file));
@@ -84,11 +89,15 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
     }
   };
 
-  const name = det ? pestLabel(lang, det.pestType) : '';
+  const name = det ? sentenceCase(pestLabel(lang, det.pestType)) : '';
   const info = det ? pests[det.pestType.toLowerCase()] : undefined;
   const crop = det ? cropGroupLabel(lang, det.crop || info?.crop) : '';
   const tips = det ? (info?.management?.length ? info.management : pestTips(lang, det.crop, det.management || [])) : [];
   const sure = (det?.confidence ?? 0) >= SURE;
+  const unsure = (det?.confidence ?? 0) < 0.4;
+  const sureWord = sure ? t.sureWord : unsure ? t.unsureWord : t.maybeWord;
+  const openCamera = () => (canUseCamera() ? setCamOpen(true) : cameraRef.current?.click());
+  const askAbout = () => { try { localStorage.setItem('agriqnet_ask_prefill', fmt(t.askPestQ, { pest: name })); } catch { /* ignore */ } onNavigate('chat'); };
   const adv = advice.value && det && advice.value.pest === det.pestType ? advice.value : null;
   const zones = useMemo(() => (districtId ? zonesFor(districtId, edges, DEPTH[severity]) : null), [districtId, edges, severity]);
   const reach = zones ? zones.red.length + zones.orange.length + zones.yellow.length : 0;
@@ -113,6 +122,7 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
         <Step n={3} title={t.stepWarn} done={step > 3} active={step >= 3} />
       </div>
 
+      {camOpen && <CameraCapture lang={lang} onCapture={(f) => onFile(f)} onClose={() => setCamOpen(false)} onGallery={() => { setCamOpen(false); galleryRef.current?.click(); }} onFallback={() => { setCamOpen(false); cameraRef.current?.click(); }} />}
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
       <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
 
@@ -123,7 +133,7 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
             <p className="flex-1 text-gray-800 text-lg">{t.photoTip}</p>
             <SpeakButton text={t.photoTip} lang={lang} />
           </div>
-          <button onClick={() => cameraRef.current?.click()} className={`${big} bg-agri-700 hover:bg-agri-800 text-white py-6 text-xl shadow-lift`}>
+          <button onClick={openCamera} className={`${big} bg-agri-700 hover:bg-agri-800 text-white py-6 text-xl shadow-lift`}>
             <Camera size={28} /> {t.takePhoto}
           </button>
           <button onClick={() => galleryRef.current?.click()} className={`${big} bg-paper border-2 border-agri-200 text-agri-800 hover:bg-agri-50`}>
@@ -134,13 +144,18 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
 
       {step === 2 && (
         <div className="bg-paper rounded-3xl border border-gray-100 overflow-hidden">
-          {preview && <img src={preview} alt="" className="w-full max-h-72 object-contain bg-gray-50" />}
+          {preview && (
+            <div className="relative bg-gray-900">
+              <img src={preview} alt="" className="w-full max-h-72 object-contain" />
+              {busy && <span aria-hidden className="pest-scan absolute inset-x-0 top-0 h-1 bg-gold-300 shadow-[0_0_24px_6px_rgba(226,199,102,0.65)]" />}
+            </div>
+          )}
           <div className="p-5 space-y-4">
-            {busy && <Spinner text={t.checkingPhoto} />}
+            {busy && <WorkingOn lang={lang} expectedMs={6000} stages={[{ icon: MagnifyingGlass, text: t.stagePest1 }, { icon: BugD, text: t.stagePest2 }]} />}
             {!busy && error && (
               <div className="text-center space-y-4">
                 <IconChip icon={Question} tone="stone" size="xl" className="mx-auto" />
-                <p className="text-lg text-gray-800">{error}</p>
+                <p role="alert" className="text-lg text-gray-800">{error}</p>
                 <button onClick={restart} className={`${big} bg-agri-700 text-white`}><RotateCcw /> {t.tryAnotherPhoto}</button>
               </div>
             )}
@@ -156,18 +171,25 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
                       {crop && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-agri-50 border border-agri-200 text-agri-800 font-medium text-sm"><Ico icon={Plant} size={16} />{fmt(t.hostCrop, { crop })}</span>}
                       <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium text-sm border ${sure ? 'bg-agri-50 border-agri-200 text-agri-800' : 'bg-gold-100 border-gold-300 text-gold-700'}`}>
                         <span className="w-14 h-1.5 rounded-full bg-black/10 overflow-hidden"><motion.span className="block h-full rounded-full" style={{ background: sure ? '#2B6046' : '#C9A227' }} initial={{ width: 0 }} animate={{ width: `${Math.round(det.confidence * 100)}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} /></span>
-                        {sure ? t.aiSure : t.aiNotSure} {Math.round(det.confidence * 100)}%
+                        {sureWord}
                       </span>
                     </div>
                   </div>
                   <SpeakButton text={[name, crop && fmt(t.hostCrop, { crop }), adv?.description, ...(adv?.treatments || tips).slice(0, 4)].filter(Boolean).join('. ')} lang={lang} />
                 </div>
 
+                {unsure && (
+                  <div role="status" className="flex flex-col sm:flex-row sm:items-center gap-3 bg-gold-100 border border-gold-300 rounded-2xl p-4">
+                    <p className="flex-1 font-semibold text-ink">{t.lowConfidence}</p>
+                    <button onClick={() => { restart(); openCamera(); }} className="min-h-[48px] px-4 rounded-2xl bg-agri-700 text-white font-bold flex items-center justify-center gap-2"><Camera size={20} />{t.retakePhoto}</button>
+                  </div>
+                )}
+
                 <div className="bg-cream border border-gray-200 rounded-2xl p-4 md:p-5">
-                  <p className="flex items-center gap-2 font-semibold text-ink mb-2 text-lg"><Ico icon={FirstAidKit} size={22} tone="forest" />{t.recommendedMgmt}</p>
+                  <p className="flex items-center gap-2 font-semibold text-ink mb-2 text-lg"><Ico icon={FirstAidKit} size={22} tone="forest" />{t.whatToDoNow}</p>
                   {adv?.description && <p className="text-gray-800 mb-2">{adv.description}</p>}
                   <ul className="space-y-1.5">
-                    {(adv?.treatments?.length ? adv.treatments : tips).slice(0, 4).map((m, i) => <li key={i} className="flex gap-2 text-gray-800"><span className="w-6 h-6 shrink-0 rounded-full bg-agri-700 text-white text-xs font-semibold flex items-center justify-center mt-0.5">{i + 1}</span>{m}</li>)}
+                    {(adv?.treatments?.length ? adv.treatments : tips).slice(0, 3).map((m, i) => <li key={i} className="flex gap-2.5 text-gray-800"><span className="w-7 h-7 shrink-0 rounded-full bg-agri-700 text-white text-[15px] font-semibold flex items-center justify-center">{i + 1}</span>{m}</li>)}
                   </ul>
                   {adv?.preventions && adv.preventions.length > 0 && (
                     <>
@@ -180,7 +202,8 @@ const PestCheck: React.FC<{ lang: Language; user: Farmer; onBack: () => void; on
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <button onClick={() => setStep(3)} className={`${big} bg-red-700 hover:bg-red-800 text-white`}><Megaphone size={24} weight="duotone" /> {t.yesWarnFarmers}</button>
-                  <button onClick={restart} className={`${big} bg-paper border-2 border-gray-300 text-gray-700`}><RotateCcw /> {t.noRetake}</button>
+                  <button onClick={askAbout} className={`${big} bg-paper border-2 border-agri-700 text-agri-800`}><ChatCircleDots size={24} weight="duotone" /> {t.askAboutPest}</button>
+                  <button onClick={restart} className={`${big} sm:col-span-2 bg-paper border-2 border-gray-300 text-gray-700`}><RotateCcw /> {t.noRetake}</button>
                 </div>
               </>
             )}

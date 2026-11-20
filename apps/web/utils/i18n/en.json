@@ -836,5 +836,17 @@
   "fertReady": "Pick your crop, then tap {action}.",
   "fertMlTitle": "Best fertilizer for these numbers",
   "safetyLabel": "Be careful",
-  "fertPlanFor": "Fertilizer plan for {crop}"
+  "fertPlanFor": "Fertilizer plan for {crop}",
+  "frameHint": "Fill the box with the insect or the damaged leaf",
+  "tooDark": "Too dark. Move into daylight.",
+  "cameraBlocked": "The camera is blocked. Allow it in the browser, or choose a photo from the gallery.",
+  "capture": "Take the photo",
+  "lowConfidence": "Not sure what this is. Take a closer photo in daylight.",
+  "retakePhoto": "Take a closer photo",
+  "askAboutPest": "Ask about this pest",
+  "askPestQ": "How do I control {pest} on my crop?",
+  "whatToDoNow": "What to do now",
+  "sureWord": "Sure",
+  "maybeWord": "Probably",
+  "unsureWord": "Not sure"
 }

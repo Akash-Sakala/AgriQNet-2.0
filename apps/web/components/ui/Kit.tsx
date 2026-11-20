@@ -151,7 +151,7 @@ export const ScreenTitle: React.FC<{ lang: Language; icon: string; title: string
 export const Step: React.FC<{ n: number; title: string; done?: boolean; active?: boolean }> = ({ n, title, done, active }) => (
   <div className={`flex items-center gap-2 ${active ? 'text-gray-900' : 'text-gray-500'}`}>
     <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${done ? 'bg-agri-700 text-white' : active ? 'bg-gold-500 text-ink' : 'bg-gray-200 text-gray-500'}`}>{done ? <Check size={16} strokeWidth={3} /> : n}</span>
-    <span className="font-semibold text-sm hidden sm:inline">{title}</span>
+    <span className="font-semibold text-[15px] leading-tight">{title}</span>
   </div>
 );
 

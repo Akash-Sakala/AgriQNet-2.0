@@ -97,10 +97,12 @@ const ChatModule: React.FC<ChatModuleProps> = ({ lang, user, onBack, onNavigate 
     return saved && saved.length > 1 ? saved : [welcome()];
   });
   useEffect(() => { setMessages((m) => m.map((x) => (x.id === '1' ? { ...x, text: t.chatWelcome } : x))); }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [input, setInput] = useState('');
+  // a question handed over from another screen (e.g. "Ask about this pest") opens in "Any question"
+  const [prefill] = useState(() => { try { const q = localStorage.getItem('agriqnet_ask_prefill') || ''; localStorage.removeItem('agriqnet_ask_prefill'); return q; } catch { return ''; } });
+  const [input, setInput] = useState(prefill);
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState(0);
-  const [mode, setModeState] = useState<AskMode>(() => (load<string>(MODE_KEY, 'general') === 'library' ? 'library' : 'general'));
+  const [mode, setModeState] = useState<AskMode>(() => (!prefill && load<string>(MODE_KEY, 'general') === 'library' ? 'library' : 'general'));
   const setMode = (m: AskMode) => { setModeState(m); save(MODE_KEY, m); };
   const [books, setBooks] = useState<Book[] | null>(null);
   const [libError, setLibError] = useState('');
