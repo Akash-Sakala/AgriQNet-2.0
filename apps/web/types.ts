@@ -13,6 +13,10 @@ export interface Farmer {
   lang?: Language;
   role?: 'farmer' | 'officer';
   crops?: string[];
+  /** farm profile shared by the crop and fertilizer advisors (English values) */
+  soilType?: string;
+  waterSource?: string;
+  fieldSize?: string;
   token?: string; // signed session token (officer actions)
   password?: string; // only sent on registration; never stored client-side
 }

@@ -1,220 +1,276 @@
-import React, { useState } from 'react';
-import { Phone, Lock, User, Loader2, ShieldCheck, AlertTriangle, MonitorPlay, BadgeCheck, Globe } from 'lucide-react';
+// Sign-in and onboarding: phone number → 6-digit code → (new farmers) district → crops.
+// No passwords. One question per screen, read-aloud on every step, steps slide in the direction
+// of travel. Demo buttons stay as quiet secondary actions.
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import {
+  Phone, ArrowLeft, Globe, Check, CircleNotch, PaperPlaneTilt, SealCheck, MonitorPlay, IdentificationBadge, Plant, MapPin, UserCircle,
+} from '@phosphor-icons/react';
 import { Language, Farmer } from '../types';
-import { getTranslation, LANGUAGES } from '../utils/translations';
+import { getTranslation, LANGUAGES, fmt } from '../utils/translations';
 import { TwilioService } from '../services/twilioService';
 import { DBService } from '../services/dbService';
 import DistrictPicker from './DistrictPicker';
-import { ChoiceGrid, SpeakButton, VoiceField } from './ui/Kit';
+import { ChoiceGrid, SpeakButton, MicButton, VoiceField } from './ui/Kit';
+import { InlineError } from './ui/WorkingOn';
 import { cropChoices } from '../utils/farmOptions';
-import { motion } from 'motion/react';
-import { Plant, UserCircle as FarmerIcon, PaperPlaneTilt, SealCheck } from './ui/Icons';
 
-interface AuthPageProps {
-  lang: Language;
-  onLogin: (user: Farmer) => void;
-  onLangChange?: (lang: Language) => void;
-}
-
-const CODES = ['+91', '+1', '+44', '+61', '+971'];
+interface AuthPageProps { lang: Language; onLogin: (user: Farmer) => void; onLangChange?: (lang: Language) => void }
 
 /** Demo accounts created by the seed (see README). */
 const DEMO = { farmer: { phone: '+910000000000', password: 'demo1234' }, officer: { phone: '+910000000001', password: 'officer123' } };
+type Step = 'phone' | 'code' | 'district' | 'crops';
+const ORDER: Step[] = ['phone', 'code', 'district', 'crops'];
+const RESEND_S = 30;
+
+const fmtPhone = (digits: string) => (digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5, 10)}` : digits);
 
 const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin, onLangChange }) => {
-  const t = getTranslation(lang);
-  const [view, setView] = useState<'login' | 'signup' | 'otp'>('login');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [code, setCode] = useState('+91');
-  const [form, setForm] = useState({ name: '', phone: '', password: '' });
+  const t = getTranslation(lang) as any;
+  const [step, setStep] = useState<Step>('phone');
+  const [dir, setDir] = useState(1);
+  const [isNew, setIsNew] = useState(false);
+  const [digits, setDigits] = useState('');
+  const [code, setCode] = useState('');
+  const [devCode, setDevCode] = useState<string | null>(null);
+  const [resendAt, setResendAt] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const [districtId, setDistrictId] = useState('');
   const [crops, setCrops] = useState<string[]>([]);
-  const [otp, setOtp] = useState('');
-  const [fallbackOtp, setFallbackOtp] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [shake, setShake] = useState(0);
   const [showLangs, setShowLangs] = useState(false);
 
-  const fullPhone = `${code}${form.phone.replace(/\D/g, '')}`;
-  const set = (k: keyof typeof form) => (v: string) => { setForm({ ...form, [k]: v }); setError(''); };
+  const phone = `+91${digits}`;
+  const total = isNew ? 4 : 2;
+  const stepNo = ORDER.indexOf(step) + 1;
+  const go = (s: Step) => { setDir(ORDER.indexOf(s) >= ORDER.indexOf(step) ? 1 : -1); setError(''); setStep(s); };
 
-  const login = async (phone: string, password: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const user = await DBService.verifyLogin(phone, password);
-      if (user) {
-        // The language picked on this screen is the farmer's language: save it on the account
-        // too, so SMS alerts arrive in it.
-        if (user.lang !== lang) {
-          DBService.updateProfile({ lang }).then(onLogin).catch(() => onLogin(user));
-        } else onLogin(user);
-      } else setError(t.errInvalidLogin);
-    } catch {
-      setError(t.errServer);
-    }
-    setLoading(false);
+  useEffect(() => {
+    if (resendAt <= Date.now()) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [resendAt]);
+  const waitS = Math.max(0, Math.ceil((resendAt - now) / 1000));
+
+  const finishLogin = (user: Farmer) => {
+    // The language picked on this screen is the farmer's language: save it on the account (SMS alerts use it)
+    if (user.lang !== lang) DBService.updateProfile({ lang }).then(onLogin).catch(() => onLogin(user));
+    else onLogin(user);
   };
 
-  const startSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return setError(t.errName);
-    if (form.phone.replace(/\D/g, '').length < 10) return setError(t.errPhone);
-    if (form.password.length < 4) return setError(t.errPassword);
-    if (!districtId) return setError(t.errSelectDistrict);
-    setLoading(true);
-    setError('');
+  const sendCode = async () => {
+    if (digits.length !== 10) { setError(t.errPhone); setShake((n) => n + 1); return; }
+    setBusy(true); setError('');
     try {
-      if (await DBService.findUserByPhone(fullPhone)) { setError(t.userExists); setLoading(false); return; }
-    } catch { setError(t.errServer); setLoading(false); return; }
-    const r = await TwilioService.sendOTP(fullPhone, undefined, 'signup', lang);
-    if (r.success) {
-      setView('otp');
-      setFallbackOtp(r.isMock && r.otp ? r.otp : null);
-    } else setError(r.error || t.errServer);
-    setLoading(false);
+      const exists = !!(await DBService.findUserByPhone(phone));
+      setIsNew(!exists);
+      const r = await TwilioService.sendOTP(phone, undefined, exists ? 'login' : 'signup', lang);
+      if (!r.success) { setError(r.error || t.errServer); return; }
+      setDevCode(r.isMock && r.otp ? r.otp : null);
+      setCode('');
+      setResendAt(Date.now() + RESEND_S * 1000); setNow(Date.now());
+      if (step !== 'code') go('code');
+    } catch { setError(t.errServer); } finally { setBusy(false); }
   };
 
-  const verify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    if (!(await TwilioService.verifyOTP(fullPhone, otp, 'signup'))) { setError(t.invalidOtp); setLoading(false); return; }
+  const verify = async (value = code) => {
+    if (value.length !== 6 || busy) return;
+    setBusy(true); setError('');
     try {
-      const user = await DBService.createUser({ id: '', name: form.name.trim(), location: '', phone: fullPhone, password: form.password, lang, districtId, crops } as any);
+      if (!isNew) return finishLogin(await DBService.otpLogin(phone, value));
+      if (await TwilioService.verifyOTP(phone, value, 'signup')) go('district');
+      else { setError(t.codeWrong); setShake((n) => n + 1); setCode(''); }
+    } catch (e: any) {
+      setError(/expired|not requested/i.test(e?.message || '') ? t.codeExpired : /wrong|invalid/i.test(e?.message || '') ? t.codeWrong : e?.message || t.errServer);
+      setShake((n) => n + 1); setCode('');
+    } finally { setBusy(false); }
+  };
+
+  const register = async () => {
+    setBusy(true); setError('');
+    try {
+      const user = await DBService.createUser({ id: '', name: name.trim(), location: '', phone, lang, districtId, crops } as any);
       onLogin(user);
-    } catch (err: any) {
-      setError(err.message || t.errServer);
-      setLoading(false);
-    }
+    } catch (e: any) { setError(e?.message || t.errServer); } finally { setBusy(false); }
   };
 
-  const big = 'w-full py-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60';
-  const PhoneRow = (
-    <div className="flex gap-2">
-      <select value={code} onChange={(e) => setCode(e.target.value)} aria-label={t.countryCode} className="bg-gray-50 border border-gray-200 rounded-2xl px-2 text-lg font-semibold text-gray-800">
-        {CODES.map((c) => <option key={c} value={c}>{c}</option>)}
-      </select>
-      <div className="flex-1 min-w-0 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-agri-400">
-        <Phone size={20} className="text-gray-400" />
-        <input type="tel" inputMode="numeric" autoComplete="tel-national" value={form.phone} onChange={(e) => set('phone')(e.target.value)} placeholder="98765 43210"
-          className="flex-1 min-w-0 bg-transparent outline-none text-lg py-3.5 text-gray-900" required />
-      </div>
-    </div>
-  );
-  const PasswordRow = (
-    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-agri-400">
-      <Lock size={20} className="text-gray-400" />
-      <input type="password" autoComplete={view === 'login' ? 'current-password' : 'new-password'} value={form.password} onChange={(e) => set('password')(e.target.value)} placeholder="••••"
-        className="flex-1 min-w-0 bg-transparent outline-none text-lg py-3.5 text-gray-900" required />
-    </div>
-  );
-  const Err = error ? <div role="alert" className="p-3 bg-red-50 text-red-700 rounded-xl border border-red-100 flex gap-2 items-start"><AlertTriangle size={18} className="shrink-0 mt-0.5" />{error}</div> : null;
+  const demo = async (who: 'farmer' | 'officer') => {
+    setBusy(true); setError('');
+    try {
+      const u = await DBService.verifyLogin(DEMO[who].phone, DEMO[who].password);
+      if (u) finishLogin(u); else setError(t.errInvalidLogin);
+    } catch { setError(t.errServer); } finally { setBusy(false); }
+  };
+
+  const question: Record<Step, string> = { phone: t.phoneQ, code: t.codeQ, district: t.districtQ, crops: t.cropsQ };
+  const help: Record<Step, string> = { phone: t.phoneHelp, code: fmt(t.codeSentTo, { phone: `+91 ${fmtPhone(digits).replace(' ', ' ')}` }), district: t.districtWhy, crops: t.yourCropsHint };
+  const primary = 'w-full min-h-[56px] rounded-2xl bg-agri-700 hover:bg-agri-800 text-white text-lg font-bold flex items-center justify-center gap-2 shadow-soft disabled:opacity-50 active:scale-[0.98] transition-transform';
 
   return (
-    <div className="min-h-screen bg-cream flex items-start md:items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-xl bg-paper rounded-[28px] shadow-lift border border-gray-200 overflow-hidden">
-        {/* Header with language */}
-        <div className="relative bg-agri-700 text-white p-5 flex items-center gap-3 overflow-hidden">
+    <div className="min-h-dvh bg-cream flex items-start sm:items-center justify-center p-4">
+      <div className="w-full max-w-xl bg-paper rounded-[28px] shadow-lift border border-gray-200 overflow-hidden">
+        {/* Brand + language */}
+        <div className="relative bg-agri-700 text-white px-5 py-4 flex items-center gap-3 overflow-hidden">
           <div className="furrows absolute inset-0" aria-hidden />
-          <span className="relative w-12 h-12 rounded-[14px] bg-white/10 ring-1 ring-white/20 flex items-center justify-center"><Plant size={30} weight="duotone" color="#E2C766" /></span>
+          <span className="relative w-12 h-12 rounded-[14px] bg-white/10 ring-1 ring-white/20 flex items-center justify-center shrink-0"><Plant size={30} weight="duotone" color="#E2C766" aria-hidden /></span>
           <div className="relative flex-1 min-w-0">
-            <p className="font-display text-2xl font-semibold">AgriQNet</p>
-            <p className="text-agri-100 text-sm truncate">{t.authDesc}</p>
+            <p className="font-display text-2xl font-semibold leading-tight">AgriQNet</p>
+            <p className="text-agri-100 leading-snug">{t.authTagline}</p>
           </div>
           {onLangChange && (
-            <button onClick={() => setShowLangs(!showLangs)} className="relative flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl font-semibold">
-              <Globe size={18} /> {LANGUAGES[lang].split(' (')[0]}
+            <button type="button" onClick={() => setShowLangs(!showLangs)} aria-expanded={showLangs}
+              className="relative min-h-[48px] flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 rounded-xl font-semibold shrink-0">
+              <Globe size={20} aria-hidden /> {LANGUAGES[lang].split(' (')[0]}
             </button>
           )}
         </div>
         {showLangs && onLangChange && (
-          <div className="grid grid-cols-4 gap-2 p-3 bg-agri-50 border-b border-agri-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-agri-50 border-b border-agri-100">
             {(Object.keys(LANGUAGES) as Language[]).map((c) => (
-              <button key={c} onClick={() => { onLangChange(c); setShowLangs(false); }}
-                className={`py-2.5 rounded-xl font-bold ${lang === c ? 'bg-agri-700 text-white' : 'bg-paper text-gray-800 border border-gray-200'}`}>{LANGUAGES[c].split(' (')[0]}</button>
+              <button key={c} type="button" onClick={() => { onLangChange(c); setShowLangs(false); }}
+                className={`min-h-[48px] rounded-xl font-bold flex items-center justify-center gap-1.5 ${lang === c ? 'bg-agri-700 text-white' : 'bg-paper text-gray-800 border border-gray-200'}`}>
+                {lang === c && <Check size={16} weight="bold" aria-hidden />}{LANGUAGES[c].split(' (')[0]}
+              </button>
             ))}
           </div>
         )}
 
         <div className="p-5 md:p-8">
-          {view === 'login' && (
-            <form onSubmit={(e) => { e.preventDefault(); login(fullPhone, form.password); }} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-ink">{t.login}</h1>
-                <SpeakButton text={t.loginHelp} lang={lang} />
-              </div>
-              {Err}
-              <label className="block"><span className="block font-semibold text-gray-700 mb-1.5">{t.phone}</span>{PhoneRow}</label>
-              <label className="block"><span className="block font-semibold text-gray-700 mb-1.5">{t.password}</span>{PasswordRow}</label>
-              <button type="submit" disabled={loading} className={`${big} bg-agri-700 text-white hover:bg-agri-800 shadow-soft`}>
-                {loading ? <Loader2 className="animate-spin" /> : t.login}
-              </button>
-              <button type="button" onClick={() => { setView('signup'); setError(''); }} className={`${big} bg-paper border-2 border-agri-600 text-agri-700 hover:bg-agri-50`}>
-                <FarmerIcon size={24} weight="duotone" /> {t.newFarmer}
-              </button>
-              <div className="pt-4 border-t border-gray-100 flex flex-wrap justify-center gap-2">
-                <button type="button" onClick={() => login(DEMO.farmer.phone, DEMO.farmer.password)} className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-full">
-                  <MonitorPlay size={18} /> {t.tryDemo}
-                </button>
-                <button type="button" onClick={() => login(DEMO.officer.phone, DEMO.officer.password)} className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-full">
-                  <BadgeCheck size={18} /> {t.tryOfficer}
-                </button>
-              </div>
-            </form>
-          )}
+          {/* Progress: back + "Step n of N" + dots */}
+          {step !== 'phone' && <div className="flex items-center gap-3 mb-4 min-h-[48px]">
+            {(
+              <button type="button" onClick={() => go(ORDER[ORDER.indexOf(step) - 1])} aria-label={t.back}
+                className="w-12 h-12 shrink-0 rounded-2xl bg-paper border border-gray-300 flex items-center justify-center text-gray-700"><ArrowLeft size={22} aria-hidden /></button>
+            )}
+            <p className="text-gray-600 font-semibold">{fmt(t.stepOf, { n: stepNo, total })}</p>
+            <span className="flex gap-1.5 ml-auto" aria-hidden>
+              {Array.from({ length: total }).map((_, i) => (
+                <span key={i} className={`h-2 rounded-full transition-all ${i < stepNo ? 'w-6 bg-agri-700' : 'w-2 bg-gray-300'}`} />
+              ))}
+            </span>
+          </div>}
 
-          {view === 'signup' && (
-            <form onSubmit={startSignup} className="space-y-5">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-ink">{t.signup}</h1>
-                <SpeakButton text={t.signupHelp} lang={lang} />
+          <AnimatePresence mode="wait" custom={dir} initial={false}>
+            <motion.div key={step} custom={dir}
+              variants={{ enter: (d: number) => ({ opacity: 0, x: d * 32 }), center: { opacity: 1, x: 0 }, exit: (d: number) => ({ opacity: 0, x: d * -24 }) }}
+              initial="enter" animate="center" exit="exit" transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}>
+              <div className="flex items-start gap-3 mb-1">
+                <h1 className="flex-1 text-2xl md:text-[1.75rem] font-semibold text-ink leading-tight">{question[step]}</h1>
+                <SpeakButton text={`${question[step]} ${help[step]}`} lang={lang} />
               </div>
-              {Err}
-              <label className="block"><span className="block font-semibold text-gray-700 mb-1.5">{t.fullName}</span>
-                <VoiceField lang={lang} value={form.name} onChange={set('name')} icon={<User size={20} />} />
-              </label>
-              <label className="block"><span className="block font-semibold text-gray-700 mb-1.5">{t.phone}</span>{PhoneRow}</label>
-              <label className="block"><span className="block font-semibold text-gray-700 mb-1.5">{t.password}</span>{PasswordRow}</label>
-              <div>
-                <span className="block font-semibold text-gray-700 mb-1">{t.yourDistrict} <span className="text-red-600">*</span></span>
-                <p className="text-sm text-gray-500 mb-2">{t.districtWhy}</p>
-                <DistrictPicker lang={lang} value={districtId} onChange={(id) => { setDistrictId(id); setError(''); }} error={!!error && !districtId} />
-              </div>
-              <div>
-                <span className="block font-semibold text-gray-700 mb-1">{t.yourCrops}</span>
-                <p className="text-sm text-gray-500 mb-2">{t.yourCropsHint}</p>
-                <ChoiceGrid options={cropChoices(t)} value={crops} onChange={setCrops} multi cols="grid-cols-3 sm:grid-cols-4" size="sm" />
-              </div>
-              <button type="submit" disabled={loading} className={`${big} bg-agri-700 text-white hover:bg-agri-800 shadow-soft`}>
-                {loading ? <Loader2 className="animate-spin" /> : <><PaperPlaneTilt size={22} weight="duotone" /> {t.sendOtp}</>}
-              </button>
-              <button type="button" onClick={() => { setView('login'); setError(''); }} className="w-full text-agri-700 font-semibold py-2">{t.haveAccount}</button>
-            </form>
-          )}
+              <p className="text-gray-600 mb-5">{help[step]}</p>
 
-          {view === 'otp' && (
-            <form onSubmit={verify} className="space-y-5 text-center">
-              <div className="w-16 h-16 bg-agri-100 text-agri-700 rounded-full flex items-center justify-center mx-auto"><ShieldCheck size={32} /></div>
-              <h1 className="text-2xl font-semibold text-ink">{t.enterOtp}</h1>
-              <p className="text-gray-600">{t.otpSent} <span className="font-bold text-gray-900">{fullPhone}</span></p>
-              {fallbackOtp && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-left">
-                  <p className="text-sm text-yellow-800 mb-2">{t.otpFallbackDesc}</p>
-                  <p className="font-mono font-bold text-2xl tracking-[0.3em] text-yellow-900 select-all">{fallbackOtp}</p>
+              {error && <InlineError message={error} retryLabel={t.retry} className="mb-4" />}
+
+              {step === 'phone' && (
+                <form onSubmit={(e) => { e.preventDefault(); sendCode(); }} className="space-y-4">
+                  <motion.div key={shake} animate={shake ? { x: [0, -6, 6, -4, 4, 0] } : {}} transition={{ duration: 0.32 }}
+                    className="flex items-center gap-2 bg-paper border-2 border-gray-300 rounded-2xl pl-3 pr-1.5 py-1.5 focus-within:border-agri-600">
+                    <span className="flex items-center gap-1 px-2 py-2 rounded-xl bg-gray-100 font-semibold text-gray-800 text-lg shrink-0"><Phone size={18} aria-hidden />+91</span>
+                    <label htmlFor="auth-phone" className="sr-only">{t.phone}</label>
+                    <input id="auth-phone" type="tel" inputMode="numeric" autoComplete="tel-national" value={fmtPhone(digits)} placeholder="98765 43210"
+                      onChange={(e) => { setDigits(e.target.value.replace(/\D/g, '').slice(-10)); setError(''); }}
+                      className="flex-1 min-w-0 w-0 bg-transparent outline-hidden text-xl tabular-nums py-2 text-ink" />
+                    <MicButton lang={lang} onText={(txt) => { const d = txt.replace(/\D/g, ''); if (d) setDigits(d.slice(-10)); }} />
+                  </motion.div>
+                  <button type="submit" disabled={busy} className={primary}>
+                    {busy ? <CircleNotch size={24} className="animate-spin" aria-hidden /> : <PaperPlaneTilt size={22} weight="duotone" aria-hidden />}{t.sendCode}
+                  </button>
+                </form>
+              )}
+
+              {step === 'code' && (
+                <div className="space-y-4">
+                  {devCode && (
+                    <div className="p-4 bg-gold-100 border border-gold-300 rounded-2xl">
+                      <p className="text-gray-800">{t.devCodeBanner}</p>
+                      <p className="font-display font-semibold text-3xl tracking-[0.3em] text-ink select-all tabular-nums">{devCode}</p>
+                    </div>
+                  )}
+                  <motion.div key={shake} animate={shake ? { x: [0, -6, 6, -4, 4, 0] } : {}} transition={{ duration: 0.32 }}>
+                    <CodeBoxes value={code} onChange={(v) => { setCode(v); setError(''); if (v.length === 6) verify(v); }} label={t.codeQ} disabled={busy} />
+                  </motion.div>
+                  <button type="button" onClick={() => verify()} disabled={busy || code.length !== 6} className={primary}>
+                    {busy ? <CircleNotch size={24} className="animate-spin" aria-hidden /> : <SealCheck size={22} weight="duotone" aria-hidden />}{t.verifyCode}
+                  </button>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" onClick={() => go('phone')} className="min-h-[48px] px-1 font-semibold text-agri-800 underline underline-offset-4">{t.changeNumber}</button>
+                    {waitS > 0
+                      ? <span className="text-gray-600 tabular-nums">{fmt(t.resendIn, { s: waitS })}</span>
+                      : <button type="button" onClick={sendCode} disabled={busy} className="min-h-[48px] px-4 rounded-2xl border-2 border-agri-700 text-agri-800 font-bold">{t.resendNow}</button>}
+                  </div>
                 </div>
               )}
-              {Err}
-              <input type="text" inputMode="numeric" autoComplete="one-time-code" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} maxLength={6} placeholder="••••••" required
-                className="w-full text-center text-3xl font-bold tracking-[0.5em] p-4 bg-gray-50 border-2 border-gray-200 rounded-2xl outline-none focus:border-agri-500" />
-              <button type="submit" disabled={loading} className={`${big} bg-agri-700 text-white hover:bg-agri-800 shadow-soft`}>
-                {loading ? <Loader2 className="animate-spin" /> : <><SealCheck size={22} weight="duotone" /> {t.verifyRegister}</>}
-              </button>
-              <button type="button" onClick={() => setView('signup')} className="text-gray-500 font-semibold">{t.wrongNumber}</button>
-            </form>
+
+              {step === 'district' && (
+                <div className="space-y-5">
+                  <DistrictPicker lang={lang} value={districtId} onChange={(id) => { setDistrictId(id); setError(''); }} />
+                  <button type="button" onClick={() => (districtId ? go('crops') : setError(t.errSelectDistrict))} className={primary}>
+                    <MapPin size={22} weight="duotone" aria-hidden />{t.next || 'Next'}
+                  </button>
+                </div>
+              )}
+
+              {step === 'crops' && (
+                <div className="space-y-5">
+                  <ChoiceGrid options={cropChoices(t)} value={crops} onChange={setCrops} multi cols="grid-cols-3 sm:grid-cols-4" size="sm" />
+                  <label className="block">
+                    <span className="block font-semibold text-gray-800 mb-1.5">{t.nameOptional}</span>
+                    <VoiceField lang={lang} value={name} onChange={setName} icon={<UserCircle size={22} />} />
+                  </label>
+                  <button type="button" onClick={register} disabled={busy} className={primary}>
+                    {busy ? <CircleNotch size={24} className="animate-spin" aria-hidden /> : <Check size={22} weight="bold" aria-hidden />}{t.finishSignup}
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {step === 'phone' && (
+            <div className="mt-6 pt-5 border-t border-gray-200">
+              <p className="text-center text-gray-600 mb-2">{t.orDemo}</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => demo('farmer')} disabled={busy} className="min-h-[48px] flex items-center gap-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-full">
+                  <MonitorPlay size={20} aria-hidden /> {t.tryDemoShort}
+                </button>
+                <button type="button" onClick={() => demo('officer')} disabled={busy} className="min-h-[48px] flex items-center gap-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-full">
+                  <IdentificationBadge size={20} aria-hidden /> {t.tryOfficer}
+                </button>
+              </div>
+            </div>
           )}
         </div>
-      </motion.div>
+      </div>
+    </div>
+  );
+};
+
+/** Six separate digit boxes; paste fills all, Backspace moves back, Android SMS autofill works on the first box. */
+const CodeBoxes: React.FC<{ value: string; onChange: (v: string) => void; label: string; disabled?: boolean }> = ({ value, onChange, label, disabled }) => {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  useEffect(() => { refs.current[Math.min(value.length, 5)]?.focus(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  const set = (i: number, raw: string) => {
+    const d = raw.replace(/\D/g, '');
+    if (!d) return;
+    const next = (value.slice(0, i) + d).slice(0, 6);
+    onChange(next);
+    refs.current[Math.min(next.length, 5)]?.focus();
+  };
+  return (
+    <div role="group" aria-label={label} className="grid grid-cols-6 gap-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <input key={i} ref={(el) => { refs.current[i] = el; }} value={value[i] || ''} disabled={disabled}
+          inputMode="numeric" autoComplete={i === 0 ? 'one-time-code' : 'off'} aria-label={`${label} ${i + 1}`} maxLength={i === 0 ? 6 : 1}
+          onChange={(e) => set(i, e.target.value)}
+          onPaste={(e) => { e.preventDefault(); const d = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6); if (d) { onChange(d); refs.current[Math.min(d.length, 5)]?.focus(); } }}
+          onKeyDown={(e) => {
+            if (e.key === 'Backspace') { e.preventDefault(); const cut = value.slice(0, Math.max(0, value[i] ? i : i - 1)); onChange(cut); refs.current[Math.max(0, cut.length)]?.focus(); }
+          }}
+          className="w-full aspect-[4/5] min-h-[56px] text-center text-3xl font-semibold tabular-nums text-ink bg-paper border-2 border-gray-300 rounded-2xl outline-hidden focus:border-agri-600 focus:ring-4 focus:ring-gold-300/40" />
+      ))}
     </div>
   );
 };

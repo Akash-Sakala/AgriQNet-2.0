@@ -1,284 +1,203 @@
-
-import { Ico, Plant, Mountains, PencilSimple } from './ui/Icons';
-import React, { useState, useEffect, useMemo } from 'react';
-import { FlaskConical, Leaf, AlertCircle, Loader2, Calendar, Scale, BrainCircuit, Activity, Sprout } from 'lucide-react';
+// Fertilizer: what to put, how much and when.
+//  • Quick advice: crop (the farmer's own first) + soil from the farm profile → AI plan, shown as an
+//    ordered schedule with a rough bag count per acre.
+//  • I have soil test numbers: N-P-K → the quantum-hybrid ML model.
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
+import { Sparkle, Flask, Plant, Calendar, Scales, Warning, Atom, Question, CaretRight, PencilSimple, Package } from '@phosphor-icons/react';
 import { GeminiService } from '../services/geminiService';
 import { PlatformService } from '../services/platformService';
 import { FertilizerPlan, Language, Farmer } from '../types';
-import { getTranslation, fmt, fertName, LOCALES } from '../utils/translations';
+import { getTranslation, fmt, fertName, plural, cropName } from '../utils/translations';
 import { ScreenTitle, SpeakButton, ChoiceGrid, VoiceField } from './ui/Kit';
 import { MlExtras, MlDetails } from './ui/MlExtras';
-import { cropChoices, soilChoices } from '../utils/farmOptions';
+import { WorkingOn, InlineError } from './ui/WorkingOn';
+import { Segmented, NumberStepper } from './ui/Segmented';
+import { FarmQuestions } from './FarmQuestions';
+import { cropChoices } from '../utils/farmOptions';
 import { useLocalized } from '../utils/useLocalized';
 import { normalizeFertilizerPlans } from '../services/aiNormalize';
-
-interface FertilizerAdvisorProps {
-  lang: Language;
-  user: Farmer;
-  onBack: () => void;
-}
+import { useFarmProfile } from '../utils/farmProfile';
+import { matchWord } from './CropAdvisor';
+import { cn } from '../lib/utils';
 
 const STORAGE_KEY = 'agriqnet_fertilizer_advisor';
-
 type AdvisorMode = 'genai' | 'ml';
 
-const FertilizerAdvisor: React.FC<FertilizerAdvisorProps> = ({ lang, user, onBack }) => {
-  const t = getTranslation(lang);
-  const [loading, setLoading] = useState(false);
+/** "50 kg per acre" → 1 bag of 50 kg (only when the dosage clearly says kg per acre). */
+function bagsPerAcre(dosage: string): number | null {
+  const m = /(\d+(?:\.\d+)?)\s*(?:-|–|to)?\s*(\d+(?:\.\d+)?)?\s*kg[^\d]{0,12}(acre|ಎಕರೆ|एकड़|ఎకరా)/i.exec(dosage || '');
+  if (!m) return null;
+  const kg = m[2] ? (Number(m[1]) + Number(m[2])) / 2 : Number(m[1]);
+  const bags = Math.round((kg / 50) * 2) / 2;
+  return bags >= 0.5 ? bags : null;
+}
+
+const FertilizerAdvisor: React.FC<{ lang: Language; user: Farmer; onBack: () => void }> = ({ lang, user, onBack }) => {
+  const t = getTranslation(lang) as any;
+  const farm = useFarmProfile(user);
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } })();
   const [mode, setMode] = useState<AdvisorMode>('genai');
-
-  // Initialize state from localStorage
-  const savedData = (() => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    } catch { return {}; }
-  })();
-
-  // GenAI Mode State
-  const [crop, setCrop] = useState<string>(savedData.crop || user.crops?.[0] || '');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [editing, setEditing] = useState(!farm.profile.soilType);
+  const [crop, setCrop] = useState<string>(saved.crop || user.crops?.[0] || '');
   const [otherCrop, setOtherCrop] = useState('');
-  const [soilType, setSoilType] = useState(savedData.soilType && savedData.soilType.includes('Soil') ? savedData.soilType : 'Red Soil');
-  // AI plans follow the language switch (translated, not re-generated)
+  const [npk, setNpk] = useState<{ nitrogen: number; phosphorus: number; potassium: number }>(saved.mlParams || { nitrogen: 40, phosphorus: 40, potassium: 40 });
+  const [mlResult, setMlResult] = useState<{ prediction: string; details?: MlDetails } | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ crop, mlParams: npk })); } catch { /* ignore */ } }, [crop, npk]);
+
   const plansStore = useLocalized<FertilizerPlan[]>('agriqnet_fert_plans', lang, []);
   const plans = useMemo(() => normalizeFertilizerPlans(plansStore.value), [plansStore.value]);
-  const setPlans = plansStore.setValue;
-  // The farmer's own crops first
   const allCrops = cropChoices(t);
-  const myCrops = [...allCrops.filter((c) => user.crops?.includes(c.value)), ...allCrops.filter((c) => !user.crops?.includes(c.value))].slice(0, 9);
-  const cropToSend = crop === '__other' ? otherCrop : crop;
-
-  // ML Mode State
-  const [mlParams, setMlParams] = useState({
-    nitrogen: 40,
-    phosphorus: 40,
-    potassium: 40
-  });
-  const [mlResult, setMlResult] = useState<{prediction: string, details?: MlDetails} | null>(null);
-
-  // Save to localStorage on change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ crop, soilType, mlParams }));
-  }, [crop, soilType, mlParams]);
+  const myCrops = [...allCrops.filter((c) => user.crops?.includes(c.value)), ...allCrops.filter((c) => !user.crops?.includes(c.value))].slice(0, 8);
+  const cropToSend = crop === '__other' ? otherCrop.trim() : crop;
+  const soil = farm.profile.soilType || 'Red Soil';
+  const reveal = () => window.setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
 
   const handleRecommend = async () => {
     if (!cropToSend) return;
-    setLoading(true);
+    setLoading(true); setErr(''); setEditing(false); reveal();
     try {
-      const results = await GeminiService.recommendFertilizer(cropToSend, soilType, lang, { districtId: user.districtId, crops: user.crops });
-      setPlans(normalizeFertilizerPlans(results));
-    } catch (err) {
-      console.error(err);
-      alert(t.errFertGenAi);
-    } finally {
-      setLoading(false);
-    }
+      const results = normalizeFertilizerPlans(await GeminiService.recommendFertilizer(cropToSend, soil, lang, { districtId: user.districtId, crops: user.crops }));
+      if (!results.length) throw new Error('empty plan');
+      plansStore.setValue(results);
+      reveal();
+    } catch (e) { console.error(e); setErr(t.errFertGenAi); } finally { setLoading(false); }
   };
-
   const handleMLPredict = async () => {
-    setLoading(true);
-    setMlResult(null);
+    setLoading(true); setMlResult(null); setErr(''); reveal();
     try {
-      const payload = {
-        Nitrogen: mlParams.nitrogen,
-        Potassium: mlParams.potassium,
-        Phosphorous: mlParams.phosphorus // API expects 'Phosphorous'
-      };
-
-      // Local AgriQNet v3 quantum-hybrid recommender (services/recommender) via the API gateway
-      const data: any = await PlatformService.recommendFertilizer(payload);
-      setMlResult(data);
-    } catch (err) {
-      console.error(err);
-      alert(t.errFertModel);
-    } finally {
-      setLoading(false);
-    }
+      setMlResult(await PlatformService.recommendFertilizer({ Nitrogen: npk.nitrogen, Potassium: npk.potassium, Phosphorous: npk.phosphorus }) as any);
+      reveal();
+    } catch (e) { console.error(e); setErr(t.errFertModel); } finally { setLoading(false); }
   };
 
-  const handleMlParamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMlParams({ ...mlParams, [e.target.name]: parseFloat(e.target.value) });
-  };
+  const cropLabelShown = crop === '__other' ? otherCrop : cropName(t, crop);
+  const planSpeech = plans.map((p, i) => `${i + 1}. ${p.name}. ${t.whenLabel}: ${p.applicationFrequency}. ${t.howMuch}: ${p.dosage}. ${p.warnings.join('. ')}`).join(' ');
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-5">
       <ScreenTitle lang={lang} icon="fertilizer" title={t.tileFert} desc={t.tileFertSub} onBack={onBack} />
+      <Segmented label={t.tileFert} value={mode} onChange={(m) => { setMode(m); setErr(''); }}
+        options={[{ value: 'genai', label: t.modeQuick, icon: Sparkle }, { value: 'ml', label: t.modeSoilTest, icon: Flask }]} />
 
-      {/* Mode Switcher */}
-      <div className="flex justify-center mb-6">
-        <div className="bg-gray-100 p-1.5 rounded-full inline-flex items-center shadow-inner">
-          <button
-            onClick={() => setMode('genai')}
-            className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${
-              mode === 'genai' 
-                ? 'bg-paper text-agri-700 shadow-soft' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <BrainCircuit size={16} />
-            {t.aiModel}
-          </button>
-          <button
-            onClick={() => setMode('ml')}
-            className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${
-              mode === 'ml' 
-                ? 'bg-agri-700 text-white shadow-soft' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Activity size={16} />
-            {t.fertilizerPrecision}
-          </button>
-        </div>
-      </div>
-
-      {/* Input Section */}
-      <div className={`bg-paper rounded-3xl p-8 shadow-soft border ${mode === 'ml' ? 'border-gold-300' : 'border-agri-100'}`}>
-        <div className="text-center max-w-2xl mx-auto mb-8">
-           <div className={`inline-flex p-3 rounded-full mb-4 ${mode === 'ml' ? 'bg-gold-100 text-gold-700' : 'bg-gold-100 text-gold-700'}`}>
-             {mode === 'ml' ? <Activity size={32} /> : <FlaskConical size={32} />}
-           </div>
-           <h2 className="text-3xl font-bold text-gray-800">{mode === 'ml' ? t.fertilizerPrecision : t.calcTitle}</h2>
-           <p className="text-gray-500 mt-2">{mode === 'ml' ? t.fertilizerPrecisionDesc : t.calcDesc}</p>
-        </div>
-
-        {mode === 'ml' ? (
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 items-start">
+        <section className="bg-paper rounded-[20px] p-5 border border-gray-200 shadow-soft space-y-5">
+          {mode === 'genai' ? (
+            <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t.nitrogen}</label>
-                <input type="range" name="nitrogen" min="0" max="140" value={mlParams.nitrogen} onChange={handleMlParamChange} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gold-700" />
-                <div className="text-right text-xs font-bold text-gold-700">{mlParams.nitrogen} kg/ha</div>
+                <p className="flex items-center gap-2 text-xl font-semibold text-ink mb-3"><Plant size={24} weight="duotone" className="text-agri-700" aria-hidden />{t.qCrop}</p>
+                <ChoiceGrid options={[...myCrops, { value: '__other', label: t.otherCrop, ph: PencilSimple, tone: 'stone' as const }]} value={crop} onChange={setCrop} cols="grid-cols-3" size="sm" />
+                {crop === '__other' && <div className="mt-3"><VoiceField lang={lang} value={otherCrop} onChange={setOtherCrop} placeholder={t.phCrop} /></div>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t.phosphorus}</label>
-                <input type="range" name="phosphorus" min="0" max="140" value={mlParams.phosphorus} onChange={handleMlParamChange} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gold-700" />
-                <div className="text-right text-xs font-bold text-gold-700">{mlParams.phosphorus} kg/ha</div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t.potassium}</label>
-                <input type="range" name="potassium" min="0" max="140" value={mlParams.potassium} onChange={handleMlParamChange} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gold-700" />
-                <div className="text-right text-xs font-bold text-gold-700">{mlParams.potassium} kg/ha</div>
-              </div>
-           </div>
-        ) : (
-          <div className="space-y-6 mb-6">
-             <div className="space-y-2">
-               <label className="flex items-center gap-2 font-semibold text-gray-800"><Ico icon={Plant} size={20} tone="leaf" />{t.targetCrop}</label>
-               <ChoiceGrid options={[...myCrops, { value: '__other', label: t.otherCrop, ph: PencilSimple, tone: 'stone' as const }]} value={crop} onChange={setCrop} cols="grid-cols-3 sm:grid-cols-5" size="sm" />
-               {crop === '__other' && <VoiceField lang={lang} value={otherCrop} onChange={setOtherCrop} placeholder={t.phCrop} />}
-             </div>
-             <div className="space-y-2">
-               <label className="flex items-center gap-2 font-semibold text-gray-800"><Ico icon={Mountains} size={20} tone="soil" />{t.soilCond}</label>
-               <ChoiceGrid options={soilChoices(t)} value={soilType} onChange={setSoilType} cols="grid-cols-3 sm:grid-cols-5" size="sm" />
-             </div>
-          </div>
-        )}
+              <FarmQuestions lang={lang} profile={farm.profile} onChange={farm.save} fields={['soilType']} editing={editing} onEditingChange={setEditing} />
+              <button type="button" onClick={handleRecommend} disabled={loading || !cropToSend || editing}
+                className="w-full min-h-[56px] rounded-2xl bg-agri-700 hover:bg-agri-800 text-white text-lg font-bold flex items-center justify-center gap-2 shadow-soft disabled:opacity-50">
+                <Flask size={24} weight="duotone" aria-hidden />{t.genPlan}
+              </button>
+            </>
+          ) : (
+            <>
+              <details className="group bg-gold-100/60 border border-gold-300 rounded-2xl p-3">
+                <summary className="min-h-[44px] flex items-center gap-2 font-semibold text-ink cursor-pointer list-none">
+                  <Question size={22} weight="duotone" className="text-gold-700" aria-hidden />{t.soilCardQ}
+                  <CaretRight size={18} className="ml-auto transition-transform group-open:rotate-90" aria-hidden />
+                </summary>
+                <p className="text-gray-800 mt-1 pl-8">{t.soilCardA}</p>
+              </details>
+              {(['nitrogen', 'phosphorus', 'potassium'] as const).map((k, i) => (
+                <NumberStepper key={k} id={`fert-${k}`} label={t[k]} unit="kg/ha" value={npk[k]} min={0} max={200} step={1}
+                  onChange={(v) => setNpk((p) => ({ ...p, [k]: v }))} hint={fmt(t.typicalRange, { a: [20, 10, 10][i], b: [120, 80, 80][i], unit: 'kg/ha' })} decLabel={t.decrease} incLabel={t.increase} />
+              ))}
+              <button type="button" onClick={handleMLPredict} disabled={loading}
+                className="w-full min-h-[56px] rounded-2xl bg-agri-700 hover:bg-agri-800 text-white text-lg font-bold flex items-center justify-center gap-2 shadow-soft disabled:opacity-50">
+                <Atom size={24} weight="duotone" aria-hidden />{t.predictFert}
+              </button>
+            </>
+          )}
+        </section>
 
-        <button 
-          onClick={mode === 'ml' ? handleMLPredict : handleRecommend}
-          disabled={loading || (mode === 'genai' && !cropToSend)}
-          className={`w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
-            mode === 'ml' 
-            ? 'bg-agri-700 hover:bg-agri-800 text-white shadow-lift' 
-            : 'bg-agri-700 hover:bg-agri-800 text-white shadow-lift'
-          }`}
-        >
-          {loading ? <Loader2 className="animate-spin" /> : (mode === 'ml' ? <Activity /> : <FlaskConical />)}
-          {loading ? t.analyzing : (mode === 'ml' ? t.predictFert : t.genPlan)}
-        </button>
-      </div>
+        <section ref={resultsRef} className="scroll-mt-24 min-w-0" aria-live="polite">
+          {loading && (
+            <WorkingOn lang={lang} expectedMs={mode === 'ml' ? 5000 : 15000} onRetry={mode === 'ml' ? handleMLPredict : handleRecommend}
+              stages={mode === 'ml' ? [{ icon: Flask, text: t.stageMl1 }, { icon: Atom, text: t.stageMl2 }] : [{ icon: Plant, text: t.stageFert1 }, { icon: Scales, text: t.stageFert2 }, { icon: Sparkle, text: t.stageAlmost }]} />
+          )}
+          {err && !loading && <InlineError message={err} onRetry={mode === 'ml' ? handleMLPredict : handleRecommend} retryLabel={t.retry} className="mb-4" />}
 
-      {/* Results Section */}
-      {mode === 'ml' ? (
-         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {mlResult && (
-               <div className="bg-paper rounded-3xl p-8 shadow-soft border border-gold-100 flex flex-col md:flex-row items-center gap-8">
-                  <div className="w-full md:w-1/3 flex justify-center">
-                     <div className="w-40 h-40 bg-gold-100 rounded-full flex items-center justify-center shadow-inner">
-                        <Sprout size={80} className="text-gold-700" />
-                     </div>
-                  </div>
-                  <div className="w-full md:w-2/3 space-y-4 text-center md:text-left">
-                     <div className="bg-gold-100 text-gold-700 text-xs font-bold px-3 py-1 rounded-full w-fit mx-auto md:mx-0 flex items-center gap-1">
-                        <Activity size={12} /> {t.predictionResult}
-                     </div>
-                     <div className="flex items-center gap-3 justify-center md:justify-start"><h3 className="text-4xl font-bold text-gray-800">{fertName(t, mlResult.prediction)}</h3>
-                       <SpeakButton text={fmt(t.mlFertResult, { fert: fertName(t, mlResult.prediction) })} lang={lang} /></div>
-                     <div className="flex items-center justify-center md:justify-start gap-4">
-                        <div className="bg-green-50 px-4 py-2 rounded-xl border border-green-100">
-                           <span className="block text-xs text-green-600 font-bold uppercase">{t.confidence}</span>
-                           <span className="text-xl font-bold text-green-700">{((mlResult.details?.confidence ?? 0) * 100).toLocaleString(LOCALES[lang], { maximumFractionDigits: 1 })}%</span>
-                        </div>
-                     </div>
-                     <p className="text-gray-500 text-sm">
-                        {fmt(t.mlFertResult, { fert: fertName(t, mlResult.prediction) })} (N {mlParams.nitrogen} · P {mlParams.phosphorus} · K {mlParams.potassium})
-                     </p>
-                     <MlExtras details={mlResult.details} prediction={mlResult.prediction} t={t} nameOf={(x) => fertName(t, x)} />
-                  </div>
-               </div>
-            )}
-         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {plansStore.translating && <p className="col-span-full text-sm text-gray-500 flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-agri-600 border-t-transparent animate-spin" />{t.translating}</p>}
-          {plans.map((plan, idx) => (
-            <div key={idx} className="bg-paper rounded-3xl p-6 shadow-soft border border-gray-100 flex flex-col h-full hover:border-gold-300 transition-colors group">
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
-                <SpeakButton text={`${plan.name}. ${plan.description}. ${t.appFreq}: ${plan.applicationFrequency}. ${t.dosage}: ${plan.dosage}. ${(plan.warnings || []).join('. ')}`} lang={lang} />
-              </div>
-              
-              <div className="mb-6">
-                <p className="text-gray-700 text-base leading-relaxed">{plan.description}</p>
-              </div>
-              
-              <div className="mt-auto space-y-4">
-                <div className="bg-gold-100 rounded-xl p-4 space-y-4 border border-gold-100">
-                  {/* Frequency Section */}
-                  <div className="flex gap-4 items-start">
-                      <div className="bg-paper p-2 rounded-lg text-gold-700 shadow-soft shrink-0">
-                        <Calendar size={20} />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{t.appFreq}</h4>
-                        <p className="text-gray-900 font-medium text-base">{plan.applicationFrequency}</p>
-                      </div>
-                  </div>
-
-                  <div className="h-px bg-gold-300 w-full opacity-50"></div>
-
-                  {/* Dosage Section */}
-                  <div className="flex gap-4 items-start">
-                      <div className="bg-paper p-2 rounded-lg text-gold-700 shadow-soft shrink-0">
-                        <Scale size={20} />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{t.dosage}</h4>
-                        <p className="text-gray-900 font-medium text-base">{plan.dosage}</p>
-                      </div>
-                  </div>
-                </div>
-
-                {plan.warnings && plan.warnings.length > 0 && (
-                  <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2 text-red-700 font-bold text-xs uppercase tracking-wide">
-                      <AlertCircle size={14} />
-                      <span>{t.warnings}</span>
-                    </div>
-                    <ul className="space-y-2">
-                      {plan.warnings.map((w, i) => (
-                        <li key={i} className="flex gap-2 text-xs text-red-800 leading-snug">
-                          <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></span>
-                          {w}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+          {mode === 'genai' && !loading && plans.length === 0 && !err && (
+            <div className="rounded-[20px] border-2 border-dashed border-agri-200 bg-paper/60 p-8 text-center">
+              <Flask size={44} weight="duotone" className="mx-auto text-agri-500 mb-3" aria-hidden />
+              <p className="text-lg text-gray-700">{fmt(t.fertReady, { action: t.genPlan })}</p>
             </div>
-          ))}
-        </div>
-      )}
+          )}
+
+          {mode === 'genai' && !loading && plans.length > 0 && (
+            <>
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-semibold text-ink">{cropLabelShown ? fmt(t.fertPlanFor, { crop: cropLabelShown }) : t.fertPlanTitle}</h2>
+                  <p className="text-gray-600">{t.fertPlanHint}</p>
+                </div>
+                <SpeakButton text={`${t.fertPlanTitle}. ${planSpeech}`} lang={lang} label />
+              </div>
+              {plansStore.translating && <p className="text-[15px] text-gray-600 mb-2">{t.translating}</p>}
+              <ol className="relative space-y-4 before:absolute before:left-[19px] before:top-6 before:bottom-6 before:w-0.5 before:bg-agri-200">
+                {plans.map((p, i) => {
+                  const bags = bagsPerAcre(p.dosage);
+                  return (
+                    <motion.li key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 5) * 0.06, duration: 0.32 }} className="relative flex gap-3">
+                      <span className="relative z-10 w-10 h-10 shrink-0 rounded-full bg-agri-700 text-white font-bold flex items-center justify-center tabular-nums ring-4 ring-cream" aria-hidden>{i + 1}</span>
+                      <div className="flex-1 min-w-0 bg-paper border border-gray-200 rounded-[20px] p-4 shadow-soft">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-display text-xl font-semibold text-ink">{p.name}</h3>
+                          <SpeakButton size="sm" text={`${p.name}. ${p.description}. ${t.whenLabel}: ${p.applicationFrequency}. ${t.howMuch}: ${p.dosage}. ${p.warnings.join('. ')}`} lang={lang} />
+                        </div>
+                        {p.description && <p className="text-gray-700 mt-1">{p.description}</p>}
+                        <dl className="mt-3 grid sm:grid-cols-2 gap-2">
+                          <div className="bg-cream rounded-2xl p-3"><dt className="flex items-center gap-1.5 text-gray-600"><Calendar size={18} weight="duotone" aria-hidden />{t.whenLabel}</dt><dd className="text-ink font-semibold mt-0.5">{p.applicationFrequency || '—'}</dd></div>
+                          <div className="bg-cream rounded-2xl p-3"><dt className="flex items-center gap-1.5 text-gray-600"><Scales size={18} weight="duotone" aria-hidden />{t.howMuch}</dt><dd className="text-ink font-semibold mt-0.5">{p.dosage || '—'}</dd>
+                            {bags && <dd className="mt-1 flex items-center gap-1.5 text-agri-800"><Package size={18} weight="duotone" aria-hidden />{plural(t, lang, 'bags', bags)}</dd>}
+                          </div>
+                        </dl>
+                        {p.warnings.length > 0 && (
+                          <div className="mt-3 bg-clay-50 border border-clay-600/25 rounded-2xl p-3">
+                            <p className="flex items-center gap-1.5 font-semibold text-clay-700"><Warning size={20} weight="duotone" aria-hidden />{t.safetyLabel}</p>
+                            <ul className="mt-1 space-y-1 text-gray-800 list-disc pl-6">{p.warnings.map((w, j) => <li key={j}>{w}</li>)}</ul>
+                          </div>
+                        )}
+                      </div>
+                    </motion.li>
+                  );
+                })}
+              </ol>
+            </>
+          )}
+
+          {mode === 'ml' && !loading && !mlResult && !err && (
+            <div className="rounded-[20px] border-2 border-dashed border-agri-200 bg-paper/60 p-8 text-center">
+              <Atom size={44} weight="duotone" className="mx-auto text-agri-500 mb-3" aria-hidden />
+              <p className="text-lg text-gray-700">{t.fertilizerPrecisionDesc}</p>
+            </div>
+          )}
+          {mode === 'ml' && mlResult && !loading && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-paper rounded-[20px] p-5 border border-gray-200 shadow-lift">
+              <p className="text-gray-600">{t.fertMlTitle}</p>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="w-14 h-14 rounded-2xl bg-gold-100 text-gold-700 flex items-center justify-center" aria-hidden><Flask size={30} weight="duotone" /></span>
+                <h2 className="font-display text-3xl font-semibold text-ink">{fertName(t, mlResult.prediction)}</h2>
+                <SpeakButton text={fmt(t.mlFertResult, { fert: fertName(t, mlResult.prediction) })} lang={lang} />
+              </div>
+              {mlResult.details?.confidence != null && (
+                <span className={cn('mt-3 inline-block rounded-full px-3 py-1 font-semibold', mlResult.details.confidence >= 0.8 ? 'bg-agri-700 text-white' : 'bg-gold-100 text-ink border border-gold-500')}>{matchWord(t, mlResult.details.confidence * 100)}</span>
+              )}
+              <p className="text-gray-700 mt-3">{fmt(t.mlFertResult, { fert: fertName(t, mlResult.prediction) })}</p>
+              <div className="mt-3"><MlExtras details={mlResult.details} prediction={mlResult.prediction} t={t} nameOf={(x) => fertName(t, x)} /></div>
+            </motion.div>
+          )}
+        </section>
+      </div>
     </div>
   );
 };

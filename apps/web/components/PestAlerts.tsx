@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, CheckCircle, Phone, ChevronRight } from 'lucide-react';
+import { CircleNotch as Loader2, CheckCircle, Phone, CaretRight as ChevronRight } from '@phosphor-icons/react';
 import { Farmer, Language, NavView } from '../types';
-import { getTranslation, fmt, districtName, LOCALES } from '../utils/translations';
+import { getTranslation, fmt, districtName, LOCALES, sentenceCase } from '../utils/translations';
+import { Sheet, SheetContent } from './ui/sheet';
+import { FirstAidKit, ChatCircleDots } from '@phosphor-icons/react';
 import { TwilioService } from '../services/twilioService';
 import { DBService } from '../services/dbService';
 import { PlatformService, zonesFor, WeatherAlert } from '../services/platformService';
-import { pestLabel } from '../utils/pests';
+import { pestLabel, pestTips } from '../utils/pests';
+import { pestDictionary, PestInfo } from '../services/platformService';
 import DistrictPicker from './DistrictPicker';
 import { ScreenTitle, SpeakButton } from './ui/Kit';
 import { motion } from 'motion/react';
@@ -31,6 +34,12 @@ const PestAlerts: React.FC<{ lang: Language; user: Farmer; onBack: () => void; o
   const [wx, setWx] = useState<WeatherAlert[]>([]);
   const [err, setErr] = useState(false);
   const place = districtName(t, user.districtId || '', user.location);
+  const [pests, setPests] = useState<Record<string, PestInfo>>({});
+  const [howTo, setHowTo] = useState<any | null>(null);
+  useEffect(() => { pestDictionary(lang).then(setPests).catch(() => {}); }, [lang]);
+  const pname = (en: string) => sentenceCase(pestLabel(lang, en));
+  const tipsFor = (en: string): string[] => { const info = pests[en.toLowerCase()]; return info?.management?.length ? info.management : pestTips(lang, info?.crop, []); };
+  const askAbout = (en: string) => { try { localStorage.setItem('agriqnet_ask_prefill', fmt((t as any).askPestQ, { pest: pname(en) })); } catch { /* ignore */ } onNavigate('chat'); };
 
   useEffect(() => {
     Promise.all([PlatformService.getAlerts(), PlatformService.getEdges()])
@@ -52,7 +61,7 @@ const PestAlerts: React.FC<{ lang: Language; user: Farmer; onBack: () => void; o
 
   const others = (alerts || []).filter((a) => a.status === 'ACTIVE' && !near.some((n) => n.id === a.id)).slice(0, 5);
 
-  const alertLine = (a: any) => `${pestLabel(lang, a.pestType)}. ${sevWord[a.severity as Sev]}. ${a.hops === 0 ? t.inYourDistrict : fmt(t.reportedIn2, { district: districtName(t, a.reportedDistrictId) })}`;
+  const alertLine = (a: any) => `${pname(a.pestType)}. ${sevWord[a.severity as Sev]}. ${a.hops === 0 ? t.inYourDistrict : fmt(t.reportedIn2, { district: districtName(t, a.reportedDistrictId) })}`;
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -71,17 +80,24 @@ const PestAlerts: React.FC<{ lang: Language; user: Farmer; onBack: () => void; o
       <section className="bg-paper rounded-3xl border border-gray-200 shadow-soft p-5">
         <h2 className="text-xl font-semibold text-ink mb-4 flex items-center gap-3"><IconChip icon={Bug} tone="rust" size="sm" />{fmt(t.pestNearTitle, { district: place })}</h2>
         {err && <p className="text-red-600">{t.errServer}</p>}
-        {!alerts && !err && <Loader2 className="animate-spin text-gray-400" />}
+        {!alerts && !err && <Loader2 className="animate-spin text-gray-500" />}
         {alerts && near.length === 0 && <p className="flex items-center gap-2 text-lg text-agri-800 bg-agri-50 border border-agri-100 rounded-2xl p-4"><Ico icon={CheckCircleD} size={24} />{t.noPestNear}</p>}
         <ul className="space-y-2">
           {near.map((a) => (
-            <li key={a.id} className={`flex items-center gap-3 border-2 rounded-2xl p-3 ${SEV_BOX[a.severity as Sev]}`}>
-              <span className="w-10 flex justify-center">{SEV_ICON[a.severity as Sev]}</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-lg leading-tight">{pestLabel(lang, a.pestType)}</p>
-                <p className="text-gray-700">{sevWord[a.severity as Sev]} · {a.hops === 0 ? t.inYourDistrict : fmt(t.reportedIn2, { district: districtName(t, a.reportedDistrictId) })} · {dateFmt.format(new Date(a.reportedAt))}</p>
+            <li key={a.id} className={`border-2 rounded-2xl p-3 ${SEV_BOX[a.severity as Sev]}`}>
+              <div className="flex items-center gap-3">
+                <span className="w-10 flex justify-center">{SEV_ICON[a.severity as Sev]}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-ink text-lg leading-tight">{pname(a.pestType)}</p>
+                  <p className="text-gray-800 font-semibold">{sevWord[a.severity as Sev]}</p>
+                  <p className="text-gray-700">{a.hops === 0 ? t.inYourDistrict : fmt(t.reportedIn2, { district: districtName(t, a.reportedDistrictId) })}</p>
+                  <p className="text-[15px] text-gray-600">{dateFmt.format(new Date(a.reportedAt))}</p>
+                </div>
+                <SpeakButton text={alertLine(a)} lang={lang} />
               </div>
-              <SpeakButton text={alertLine(a)} lang={lang} />
+              <button type="button" onClick={() => setHowTo(a)} className="mt-3 w-full min-h-[48px] rounded-2xl bg-agri-700 hover:bg-agri-800 text-white font-bold flex items-center justify-center gap-2">
+                <FirstAidKit size={22} weight="duotone" aria-hidden />{(t as any).seeWhatToDo}
+              </button>
             </li>
           ))}
         </ul>
@@ -89,7 +105,7 @@ const PestAlerts: React.FC<{ lang: Language; user: Farmer; onBack: () => void; o
           <details className="mt-3">
             <summary className="cursor-pointer text-agri-700 font-semibold py-2">{fmt(t.otherAlerts, { n: others.length })}</summary>
             <ul className="space-y-1 mt-1">
-              {others.map((a) => <li key={a.id} className="flex items-center gap-2 text-gray-700">{SEV_ICON_SM[a.severity as Sev]} {pestLabel(lang, a.pestType)} — {districtName(t, a.reportedDistrictId)}</li>)}
+              {others.map((a) => <li key={a.id} className="flex items-center gap-2 text-gray-700">{SEV_ICON_SM[a.severity as Sev]} {fmt((t as any).pestInDistrict, { pest: pname(a.pestType), district: districtName(t, a.reportedDistrictId) })}</li>)}
             </ul>
           </details>
         )}
@@ -115,6 +131,24 @@ const PestAlerts: React.FC<{ lang: Language; user: Farmer; onBack: () => void; o
       </section>
 
       <SmsSignup lang={lang} user={user} />
+
+      <Sheet open={!!howTo} onOpenChange={(o) => !o && setHowTo(null)}>
+        {howTo && (
+          <SheetContent title={pname(howTo.pestType)} description={(t as any).whatToDoNow} closeLabel={t.close}>
+            <ol className="space-y-3 mb-5">
+              {tipsFor(howTo.pestType).slice(0, 4).map((m, i) => (
+                <li key={i} className="flex gap-3 text-lg text-gray-800"><span className="w-8 h-8 shrink-0 rounded-full bg-agri-700 text-white font-semibold flex items-center justify-center">{i + 1}</span>{m}</li>
+              ))}
+            </ol>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <SpeakButton text={[pname(howTo.pestType), ...tipsFor(howTo.pestType).slice(0, 4)].join('. ')} lang={lang} label />
+              <button type="button" onClick={() => askAbout(howTo.pestType)} className="min-h-[48px] px-4 rounded-2xl border-2 border-agri-700 text-agri-800 font-bold flex items-center justify-center gap-2">
+                <ChatCircleDots size={22} weight="duotone" aria-hidden />{(t as any).askAboutPest}
+              </button>
+            </div>
+          </SheetContent>
+        )}
+      </Sheet>
     </div>
   );
 };
@@ -155,11 +189,11 @@ const SmsSignup: React.FC<{ lang: Language; user: Farmer }> = ({ lang, user }) =
     <section className="bg-paper rounded-3xl border border-gray-200 shadow-soft p-5">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 text-left">
         <IconChip icon={DeviceMobile} tone="forest" />
-        <span className="flex-1">
+        <span className="flex-1 min-w-0">
           <span className="block text-xl font-bold text-gray-900">{t.smsBasicTitle}</span>
           <span className="block text-gray-600">{t.smsBasicDesc}</span>
         </span>
-        <ChevronRight className={`text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} />
+        <ChevronRight className={`shrink-0 text-gray-500 transition-transform ${open ? 'rotate-90' : ''}`} />
       </button>
       {open && (
         <div className="mt-4 space-y-3">
@@ -168,8 +202,8 @@ const SmsSignup: React.FC<{ lang: Language; user: Farmer }> = ({ lang, user }) =
           ) : step === 'input' ? (
             <>
               <div className="flex items-center gap-2 bg-paper border border-gray-200 rounded-2xl px-4">
-                <Phone size={20} className="text-gray-400" />
-                <input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.mobileNumber} className="flex-1 bg-transparent outline-none text-lg py-3.5" />
+                <Phone size={20} className="text-gray-500" />
+                <input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.mobileNumber} className="flex-1 bg-transparent outline-hidden text-lg py-3.5" />
               </div>
               <DistrictPicker lang={lang} value={districtId} onChange={setDistrictId} />
               {err && <p className="text-red-600">{err}</p>}

@@ -22,8 +22,16 @@ export const LOCALES: Record<Language, string> = { en: 'en-IN', hi: 'hi-IN', kn:
 type Dict = typeof en & Record<string, any>;
 const RAW: Record<Language, Record<string, any>> = { en, hi, kn, te };
 
+// Development only: ?pseudo=long makes every string ~50% longer, to check layouts for long
+// Kannada / Telugu text (nothing should be clipped at 360px).
+const PSEUDO_LONG = (import.meta as any).env?.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('pseudo') === 'long';
+const lengthen = (v: any): any => (typeof v === 'string' ? `${v} ${'ẋ'.repeat(Math.ceil(v.length * 0.5))}` : Array.isArray(v) ? v.map(lengthen) : v);
+
 export const TRANSLATIONS: Record<Language, Dict> = Object.fromEntries(
-  (Object.keys(RAW) as Language[]).map((l) => [l, { ...en, ...RAW[l] } as Dict])
+  (Object.keys(RAW) as Language[]).map((l) => {
+    const merged = { ...en, ...RAW[l] } as Dict;
+    return [l, PSEUDO_LONG ? Object.fromEntries(Object.entries(merged).map(([k, v]) => [k, lengthen(v)])) : merged];
+  })
 ) as Record<Language, Dict>;
 
 export const getTranslation = (lang: Language): Dict => TRANSLATIONS[lang] || TRANSLATIONS.en;
@@ -31,6 +39,16 @@ export const getTranslation = (lang: Language): Dict => TRANSLATIONS[lang] || TR
 /** Replace {placeholders}: fmt(t.alertSummary, { farmers: 3, districts: 2 }) */
 export const fmt = (template: string, vars: Record<string, string | number> = {}) =>
   String(template ?? '').replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : `{${k}}`));
+
+/** Plural-aware string: keys `<base>_one`, `<base>_few`, `<base>_other` … chosen with Intl.PluralRules,
+ *  falling back to `<base>_other`, then `<base>`. plural(t, lang, 'pestNear', 3) → "3 pest alerts near you" */
+export const plural = (t: Dict, lang: Language, base: string, n: number, vars: Record<string, string | number> = {}) => {
+  const rule = new Intl.PluralRules(LOCALES[lang] || 'en').select(n);
+  return fmt(t[`${base}_${rule}`] ?? t[`${base}_other`] ?? t[base] ?? '', { n, ...vars });
+};
+
+/** First letter upper-case (pest names arrive lower-case in English). Leaves Indic scripts untouched. */
+export const sentenceCase = (s: string) => (s ? s.charAt(0).toLocaleUpperCase() + s.slice(1) : s);
 
 const norm = (s: string) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 

@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Globe, HelpCircle, LogOut, Menu, X, Loader2, Settings2, Check } from 'lucide-react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { Globe, Question as HelpCircle, SignOut as LogOut, List as Menu, X, CircleNotch as Loader2, SlidersHorizontal as Settings2, Check } from '@phosphor-icons/react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { SCREEN, IconChip, Ico, MapPin as PinIcon, IdentificationBadge, Plant, TONES } from './components/ui/Icons';
 import { NavView, Language, Farmer } from './types';
 import { getTranslation, LANGUAGES, loadLanguage, saveLanguage, hasSavedLanguage, districtName } from './utils/translations';
 import Home from './components/Home';
-import CropAdvisor from './components/CropAdvisor';
-import FertilizerAdvisor from './components/FertilizerAdvisor';
-import PestCheck from './components/PestCheck';
-import ChatModule from './components/ChatModule';
-import Library from './components/Library';
-import SmartWeather from './components/SmartWeather';
-import PestAlerts from './components/PestAlerts';
-import AlertNetwork from './components/AlertNetwork';
+const CropAdvisor = lazy(() => import('./components/CropAdvisor'));
+const FertilizerAdvisor = lazy(() => import('./components/FertilizerAdvisor'));
+const PestCheck = lazy(() => import('./components/PestCheck'));
+const ChatModule = lazy(() => import('./components/ChatModule'));
+const Library = lazy(() => import('./components/Library'));
+const SmartWeather = lazy(() => import('./components/SmartWeather'));
+const PestAlerts = lazy(() => import('./components/PestAlerts'));
+const AlertNetwork = lazy(() => import('./components/AlertNetwork'));
 import TourGuide, { TourStep } from './components/TourGuide';
 import AuthPage from './components/AuthPage';
 import LanguageGate from './components/LanguageGate';
@@ -21,7 +21,11 @@ import { ChoiceGrid } from './components/ui/Kit';
 import { ScreenErrorBoundary } from './components/ui/ScreenErrorBoundary';
 import { cropChoices } from './utils/farmOptions';
 import { DBService } from './services/dbService';
-import { stopSpeaking } from './utils/speech';
+import { stopSpeaking, speak } from './utils/speech';
+import { useDisplayPrefs } from './utils/displayPrefs';
+import { Toaster } from 'sonner';
+import { NavDir, screenVariants } from './components/ui/motion';
+import { Sun, PersonSimpleWalk } from '@phosphor-icons/react';
 
 /** Every screen, in menu order: picture + words (the bottom bar shows the first five). */
 const NAV: { id: NavView; key: string }[] = [
@@ -49,11 +53,14 @@ const App: React.FC = () => {
   const [user, setUser] = useState<Farmer | null>(() => DBService.getCachedUser());
   const [view, setView] = useState<NavView>('home');
   const [history, setHistory] = useState<NavView[]>([]);
+  const [navDir, setNavDir] = useState<NavDir>('forward');
   const [langOpen, setLangOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [farmOpen, setFarmOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const t = getTranslation(activeLang);
+  const display = useDisplayPrefs();
+  const toggleSun = () => { const on = !display.prefs.sun; display.toggleSun(); speak(on ? (t as any).sunlightOn : (t as any).sunlightOff, activeLang, 'display'); };
 
   useEffect(() => { document.documentElement.lang = activeLang; }, [activeLang]);
 
@@ -67,9 +74,10 @@ const App: React.FC = () => {
     if (user?.token && user.lang !== l) DBService.updateProfile({ lang: l }).then(setUser).catch(() => {});
   };
 
-  const go = (v: NavView) => {
+  const go = (v: NavView, dir: NavDir = v === 'home' ? 'back' : 'forward') => {
     if (v === view) return;
     stopSpeaking();
+    setNavDir(dir);
     setHistory((h) => (v === 'home' ? [] : [...h, view]));
     setView(v);
     setMenuOpen(false);
@@ -77,6 +85,7 @@ const App: React.FC = () => {
   };
   const back = () => {
     stopSpeaking();
+    setNavDir('back');
     setHistory((h) => {
       const prev = h[h.length - 1] || 'home';
       setView(prev);
@@ -96,7 +105,7 @@ const App: React.FC = () => {
   const logout = () => { DBService.logout(); setUser(null); setView('home'); setHistory([]); setMenuOpen(false); };
 
   if (!langChosen) return <LanguageGate onPick={setLang} />;
-  if (!user) return <AuthPage lang={activeLang} onLogin={(u) => { setUser(u); setView('home'); }} onLangChange={setLang} />;
+  if (!user) return <AuthPage lang={activeLang} onLogin={(u) => { setUser(u); setView('home'); window.scrollTo({ top: 0 }); }} onLangChange={setLang} />;
 
   const place = districtName(t, user.districtId || '', user.location);
   // The App Tour: every feature, in the order a new farmer meets them on the home screen.
@@ -132,7 +141,7 @@ const App: React.FC = () => {
   const LangButton = (
     <div className="relative" id="lang-selector">
       <button onClick={() => setLangOpen(!langOpen)} aria-expanded={langOpen} className="flex items-center gap-2 bg-paper px-3 py-2.5 rounded-2xl border border-gray-200 text-gray-800 font-semibold hover:border-agri-400 transition-colors">
-        <Globe size={20} /> <span>{LANGUAGES[activeLang].split(' (')[0]}</span>
+        <Globe size={20} /> <span className="whitespace-nowrap">{LANGUAGES[activeLang].split(' (')[0]}</span>
       </button>
       <AnimatePresence>
         {langOpen && (
@@ -151,8 +160,12 @@ const App: React.FC = () => {
   );
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion={display.prefs.reduceMotion ? 'always' : 'user'}>
     <div className="min-h-screen bg-cream flex font-sans text-ink">
+      <Toaster position="top-center" offset={16} toastOptions={{
+        style: { background: 'var(--ink)', color: '#fff', border: 0, borderRadius: 16, fontSize: '1.0625rem', fontFamily: 'var(--font-sans)', padding: '14px 16px' },
+        actionButtonStyle: { background: 'var(--gold-300)', color: 'var(--ink)', fontWeight: 700, borderRadius: 10, height: 44, padding: '0 16px', fontSize: '1rem' },
+      }} />
       <TourGuide steps={tourSteps} isOpen={tourOpen} onClose={() => setTourOpen(false)} lang={activeLang} onStepChange={() => { if (view !== 'home') setView('home'); }} />
 
       {/* Desktop sidebar */}
@@ -167,13 +180,13 @@ const App: React.FC = () => {
             <span className="flex items-center gap-1 font-semibold text-gray-900 truncate">{user.name}{user.role === 'officer' && <Ico icon={IdentificationBadge} size={18} tone="forest" />}</span>
             <span className="flex items-center gap-1 text-sm text-gray-600 truncate"><Ico icon={PinIcon} size={15} tone="forest" />{place}</span>
           </span>
-          <Settings2 size={18} className="text-gray-400" />
+          <Settings2 size={18} className="text-gray-500" />
         </button>
         <nav id="main-nav-desktop" className="flex-1 space-y-1 overflow-y-auto">
           {NAV.map((n) => {
             const on = view === n.id;
             return (
-              <button key={n.id} onClick={() => go(n.id)} aria-current={on ? 'page' : undefined}
+              <button key={n.id} onClick={() => go(n.id, 'tab')} aria-current={on ? 'page' : undefined}
                 className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[1.05rem] transition-colors ${on ? 'text-agri-900 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}>
                 {on && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-2xl bg-agri-50 border border-agri-200" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
                 <IconChip icon={SCREEN[n.id].icon} tone={SCREEN[n.id].tone} size="sm" className="relative" />
@@ -182,7 +195,10 @@ const App: React.FC = () => {
             );
           })}
         </nav>
-        <button onClick={logout} className="mt-3 flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-2xl font-semibold"><LogOut size={20} />{t.logout}</button>
+        <div className="mt-3 pt-3 border-t border-gray-200 space-y-1" role="group" aria-label={(t as any).display}>
+          <DisplaySwitch icon={<PersonSimpleWalk size={22} weight="duotone" aria-hidden />} label={(t as any).reduceMotion} on={display.prefs.reduceMotion} onToggle={display.toggleMotion} />
+        </div>
+        <button onClick={logout} className="mt-1 flex items-center gap-3 px-4 py-3 text-red-700 hover:bg-red-50 rounded-2xl font-semibold"><LogOut size={20} />{t.logout}</button>
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">
@@ -198,16 +214,23 @@ const App: React.FC = () => {
               <HelpCircle size={20} /><span className="hidden md:inline">{t.takeTour}</span>
             </button>
           )}
+          <button type="button" onClick={toggleSun} aria-pressed={display.prefs.sun} aria-label={(t as any).sunlightMode} title={(t as any).sunlightMode}
+            className={`min-h-[44px] min-w-[44px] flex items-center justify-center gap-2 px-2.5 md:px-3 rounded-2xl border font-semibold transition-colors ${display.prefs.sun ? 'bg-gold-300 border-ink text-ink' : 'bg-paper border-gray-200 text-agri-800 hover:border-agri-400'}`}>
+            <Sun size={22} weight={display.prefs.sun ? 'fill' : 'duotone'} aria-hidden /><span className="hidden md:inline">{(t as any).sunlightMode}</span>
+          </button>
           {LangButton}
           <button onClick={() => setMenuOpen(true)} aria-label={t.menu} className="lg:hidden w-11 h-11 rounded-2xl bg-paper border border-gray-200 flex items-center justify-center"><Menu /></button>
         </header>
 
         <main className="flex-1 px-4 lg:px-8 pt-4 pb-28 lg:pb-10 max-w-6xl w-full mx-auto">
           {/* Screen change: a short cross-fade with a small rise, so it is clear the page changed */}
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+          <AnimatePresence mode="wait" initial={false} custom={navDir}>
+            <motion.div key={view} custom={navDir} variants={screenVariants} initial="enter" animate="center" exit="exit">
               <ScreenErrorBoundary lang={activeLang} name={view} onHome={view === 'home' ? undefined : () => go('home')}>
-                {screen()}
+                {/* screens load on first open (smaller first download on budget phones) */}
+                <Suspense fallback={<div className="space-y-4 pt-2" aria-busy="true"><div className="shimmer h-14 rounded-2xl" /><div className="shimmer h-48 rounded-[20px]" /><div className="shimmer h-32 rounded-[20px]" /></div>}>
+                  {screen()}
+                </Suspense>
               </ScreenErrorBoundary>
             </motion.div>
           </AnimatePresence>
@@ -221,13 +244,13 @@ const App: React.FC = () => {
           const on = view === id;
           const I = SCREEN[id].icon;
           return (
-            <button key={id} onClick={() => go(id)} aria-current={on ? 'page' : undefined}
+            <button key={id} onClick={() => go(id, 'tab')} aria-current={on ? 'page' : undefined}
               className={`relative flex flex-col items-center justify-center pt-2 pb-1.5 min-h-[66px] ${on ? 'text-agri-800' : 'text-gray-500'}`}>
               <span className="relative px-4 py-1">
                 {on && <motion.span layoutId="tab-pill" className="absolute inset-0 rounded-full bg-agri-100" transition={{ type: 'spring', stiffness: 480, damping: 36 }} />}
                 <I size={24} weight={on ? 'fill' : 'duotone'} className="relative" style={{ color: on ? TONES[SCREEN[id].tone].fg : undefined }} aria-hidden />
               </span>
-              <span className={`text-[11px] mt-0.5 leading-tight text-center px-0.5 ${on ? 'font-semibold' : ''}`}>{(t as any)[n.key]}</span>
+              <span className={`text-[13px] mt-0.5 leading-tight text-center px-0.5 ${on ? 'font-semibold' : ''}`}>{(t as any)[n.key]}</span>
             </button>
           );
         })}
@@ -248,10 +271,15 @@ const App: React.FC = () => {
               <span className="flex items-center gap-1.5 font-semibold text-gray-900"><Ico icon={PinIcon} size={18} tone="forest" />{place}</span>
             </button>
             {NAV.map((n) => (
-              <button key={n.id} onClick={() => go(n.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-lg ${view === n.id ? 'bg-agri-50 font-semibold' : ''}`}>
+              <button key={n.id} onClick={() => go(n.id, 'tab')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-lg ${view === n.id ? 'bg-agri-50 font-semibold' : ''}`}>
                 <IconChip icon={SCREEN[n.id].icon} tone={SCREEN[n.id].tone} size="sm" />{(t as any)[n.key]}
               </button>
             ))}
+            {/* Display: Sunlight + Reduce motion */}
+            <div className="mt-3 pt-3 border-t border-gray-200 space-y-1" role="group" aria-label={(t as any).display}>
+              <DisplaySwitch icon={<Sun size={22} weight="duotone" aria-hidden />} label={(t as any).sunlightMode} on={display.prefs.sun} onToggle={toggleSun} />
+              <DisplaySwitch icon={<PersonSimpleWalk size={22} weight="duotone" aria-hidden />} label={(t as any).reduceMotion} hint={(t as any).reduceMotionHint} on={display.prefs.reduceMotion} onToggle={display.toggleMotion} />
+            </div>
             <button onClick={logout} className="w-full mt-3 flex items-center gap-3 px-3 py-3 text-red-700 rounded-2xl font-semibold"><LogOut />{t.logout}</button>
           </motion.div>
         </motion.div>
@@ -265,6 +293,17 @@ const App: React.FC = () => {
     </MotionConfig>
   );
 };
+
+/** A labelled on/off switch row (role="switch"), used for Sunlight and Reduce motion. */
+const DisplaySwitch: React.FC<{ icon: React.ReactNode; label: string; hint?: string; on: boolean; onToggle: () => void }> = ({ icon, label, hint, on, onToggle }) => (
+  <button type="button" role="switch" aria-checked={on} onClick={onToggle} className="w-full min-h-[52px] flex items-center gap-3 px-3 py-2 rounded-2xl text-left hover:bg-gray-100">
+    <span className="text-agri-800 shrink-0">{icon}</span>
+    <span className="flex-1 min-w-0"><span className="block font-semibold text-ink">{label}</span>{hint && <span className="block text-[15px] text-gray-600 leading-snug">{hint}</span>}</span>
+    <span aria-hidden className={`relative w-12 h-7 rounded-full shrink-0 transition-colors ${on ? 'bg-agri-700' : 'bg-gray-300'}`}>
+      <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
+    </span>
+  </button>
+);
 
 /** Change district and crops (drives weather, alerts and advice). */
 const MyFarm: React.FC<{ lang: Language; user: Farmer; onClose: () => void; onSaved: (u: Farmer) => void }> = ({ lang, user, onClose, onSaved }) => {

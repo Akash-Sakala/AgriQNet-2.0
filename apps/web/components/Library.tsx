@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Send, X, Loader2, RefreshCw } from 'lucide-react';
+import { PaperPlaneRight as Send, X, CircleNotch as Loader2, ArrowClockwise as RefreshCw } from '@phosphor-icons/react';
 import type { Icon as PhIcon } from '@phosphor-icons/react';
 import { Farmer, Language } from '../types';
 import { getTranslation, fmt, LOCALES } from '../utils/translations';
@@ -41,6 +41,23 @@ const SHADE: Record<Tone, [string, string]> = {
   rust: ['#B0582A', '#5A2A10'], red: ['#B5372B', '#5C1610'], plum: ['#714683', '#352140'], soil: ['#7D5C44', '#3A2A1E'], stone: ['#6B6456', '#2E2A23'],
 };
 
+/** Cover colour says where the book is from: ICAR green, UAS gold, TNAU clay, farmers' own sage. */
+function sourceShade(book: Book): [string, string] {
+  const p = book.publisher || '';
+  if (/ICAR|IIMR|IARI|KVK/i.test(p)) return SHADE.forest;
+  if (/UAS|University of Agricultural/i.test(p)) return SHADE.gold;
+  if (/TNAU|Tamil Nadu/i.test(p)) return SHADE.rust;
+  if ((book as any).origin === 'upload' || (book as any).origin === 'url') return SHADE.leaf;
+  return SHADE[cat(book.category).tone];
+}
+const CROP_ALIAS: Record<string, string> = { sorghum: 'jowar', rice: 'paddy', fingermillet: 'ragi', pigeonpea: 'tur', redgram: 'tur', corn: 'maize', chickpea: 'bengalgram', peanut: 'groundnut' };
+const cropKey = (c: string) => { const k = c.toLowerCase().replace(/[^a-z]/g, ''); return CROP_ALIAS[k] || k; };
+/** One short word for the cover: the book's crop, else its topic. */
+function topicWord(book: Book, t: any): string {
+  for (const c of book.crops || []) { const w = t[`crop_${cropKey(c)}`]; if (w) return w; }
+  return t[`cat_${book.category}`] || '';
+}
+
 // Home can ask the library to open a particular book
 let pendingBook: string | null = null;
 export const requestOpenBook = (id: string | null) => { pendingBook = id; };
@@ -50,12 +67,13 @@ export const BookCover: React.FC<{ book: Book; lang: Language; size?: 'sm' | 'md
   const t = getTranslation(lang);
   const title = pick(book.title, lang);
   const c = cat(book.category);
-  const [a, b] = SHADE[c.tone];
+  const [a, b] = sourceShade(book);
+  const word = topicWord(book, t);
   const w = size === 'lg' ? 'w-44 md:w-56' : size === 'sm' ? 'w-[124px] md:w-36' : 'w-36 md:w-44';
   const [imgOk, setImgOk] = useState(true);
   const hasImg = Boolean(book.coverUrl) && imgOk;
   const printed = hasImg && book.cover === 'page';
-  const titleSize = size === 'lg' ? 'text-xl' : size === 'sm' ? 'text-[0.95rem]' : 'text-base';
+  const titleSize = size === 'lg' ? 'text-3xl' : size === 'sm' ? 'text-2xl' : 'text-[1.6rem]';
   const Body = (
     <>
       <div className={`relative aspect-[2/3] rounded-[14px] overflow-hidden shadow-soft ring-1 ring-black/10 transition-[transform,box-shadow] duration-200 ${onClick ? 'group-hover:-translate-y-1 group-hover:shadow-lift' : ''}`}
@@ -68,23 +86,25 @@ export const BookCover: React.FC<{ book: Book; lang: Language; size?: 'sm' | 'md
         <span aria-hidden className="absolute inset-y-1 right-0 w-[3px] bg-gradient-to-l from-white/50 to-transparent" />
         {!printed && (
           <>
-            <span aria-hidden className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
+            <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-3 pl-4">
-              {book.publisher && <p className="text-[10px] uppercase tracking-[0.14em] text-gold-300 font-semibold mb-1 truncate">{book.publisher}</p>}
-              <p className={`font-display font-semibold text-white leading-snug line-clamp-4 ${titleSize}`}>{title}</p>
+              {/* the full title is printed under the cover; here only the topic word */}
+              <p className={`font-display font-semibold text-white leading-tight line-clamp-2 ${titleSize}`}>{word || title}</p>
             </div>
           </>
         )}
-        <span className="absolute top-2 left-3 inline-flex items-center gap-1 rounded-full bg-paper/90 backdrop-blur px-1.5 py-1 shadow-sm" title={(t as any)[`cat_${book.category}`]}>
+        {printed && <span aria-hidden className="absolute inset-x-0 bottom-0 h-2" style={{ background: a }} />}
+        <span className="absolute top-2 left-3 right-2 w-fit inline-flex items-center gap-1 rounded-full bg-paper/90 backdrop-blur px-2 py-1 shadow-xs" title={(t as any)[`cat_${book.category}`]}>
           <c.icon size={14} weight="duotone" style={{ color: TONES[c.tone].fg }} aria-hidden />
-          {book.kind === 'article' && <span className="text-[10px] font-bold text-gray-700 pr-0.5">{t.libArticle}</span>}
+          {book.publisher && <span className="text-[13px] font-semibold text-gray-800 max-w-[7rem] truncate">{book.publisher.split(/[\s,(]/)[0]}</span>}
+          {book.kind === 'article' && <span className="text-[13px] font-bold text-gray-700 pr-0.5">{t.libArticle}</span>}
         </span>
-        {book.status === 'hidden' && <span className="absolute top-2 right-2 rounded-full bg-red-600 text-white text-[10px] font-bold px-2 py-1">{t.libHidden}</span>}
+        {book.status === 'hidden' && <span className="absolute top-2 right-2 rounded-full bg-red-600 text-white text-[13px] font-bold px-2 py-1">{t.libHidden}</span>}
       </div>
       {caption && (
         <div className="mt-2 pr-1">
-          <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2">{title}</p>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{[book.publisher, book.year].filter(Boolean).join(' · ') || (book.uploadedBy && fmt(t.libBy, { name: book.uploadedBy }))}</p>
+          <p className="font-semibold text-ink leading-snug line-clamp-2">{title}</p>
+          <p className="text-[15px] text-gray-600 mt-0.5 truncate">{[book.publisher, book.year].filter(Boolean).join(', ') || (book.uploadedBy && fmt(t.libBy, { name: book.uploadedBy }))}</p>
         </div>
       )}
     </>
@@ -106,15 +126,18 @@ const Shelf: React.FC<{ title: string; icon: PhIcon; tone: Tone; count?: number;
       <div className="flex items-center gap-3 mb-3">
         <IconChip icon={icon} tone={tone} size="sm" />
         <h2 className="text-xl md:text-[1.4rem] font-semibold text-ink flex-1 min-w-0 truncate">{title}</h2>
-        {count !== undefined && <span className="text-sm text-gray-500 tabular-nums">{count}</span>}
+        {count !== undefined && <span className="text-gray-600 tabular-nums">{count}</span>}
         {action}
         <div className="hidden md:flex gap-1.5">
-          <button onClick={() => scroll(-1)} aria-label="Scroll left" className="w-9 h-9 rounded-full bg-paper border border-gray-200 flex items-center justify-center hover:border-agri-300"><CaretLeft size={18} /></button>
-          <button onClick={() => scroll(1)} aria-label="Scroll right" className="w-9 h-9 rounded-full bg-paper border border-gray-200 flex items-center justify-center hover:border-agri-300"><CaretRight size={18} /></button>
+          <button onClick={() => scroll(-1)} aria-label="Scroll left" className="w-11 h-11 rounded-full bg-paper border border-gray-200 flex items-center justify-center hover:border-agri-300"><CaretLeft size={18} /></button>
+          <button onClick={() => scroll(1)} aria-label="Scroll right" className="w-11 h-11 rounded-full bg-paper border border-gray-200 flex items-center justify-center hover:border-agri-300"><CaretRight size={18} /></button>
         </div>
       </div>
-      <div ref={ref} className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-4 px-4 lg:mx-0 lg:px-0 [scrollbar-width:thin]">
-        {children}
+      <div className="relative">
+        <div ref={ref} className="no-scrollbar flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-4 px-4 lg:mx-0 lg:px-0">
+          {children}
+        </div>
+        <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-4 lg:right-0 w-10 bg-gradient-to-l from-cream to-transparent" />
       </div>
     </section>
   );
@@ -224,7 +247,7 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
                         return (
                           <button onClick={() => { if (s) { setFlash(`${m.id}-${n}`); setTimeout(() => setFlash(null), 1600); } }}
                             title={s ? `${s.title} · ${fmt(t.libPage, { n: s.page })}` : ''}
-                            className="inline-flex items-center justify-center align-super ml-0.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-gold-100 text-gold-700 text-[11px] font-bold leading-none hover:bg-gold-300">{n}</button>
+                            className="inline-flex items-center justify-center align-super ml-0.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-gold-100 text-gold-700 text-[13px] font-bold leading-none hover:bg-gold-300">{n}</button>
                         );
                       },
                     }}>{citeLinks(m.text)}</ReactMarkdown>
@@ -237,12 +260,12 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
                   {m.extractive && <p className="text-xs text-gray-500">{t.libOfflineAi}</p>}
                   {!!m.sources?.length && (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5">{t.libSources}</p>
+                      <p className="text-[15px] font-semibold text-gray-600 mb-1.5">{t.libSources}</p>
                       <div className="grid sm:grid-cols-2 gap-2">
                         {m.sources.map((s) => (
                           <div key={s.n} className={`rounded-xl border bg-paper p-2.5 transition-colors ${flash === `${m.id}-${s.n}` ? 'border-gold-500 bg-gold-100/50' : 'border-gray-200'}`}>
                             <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-gold-100 text-gold-700 text-[11px] font-bold flex items-center justify-center shrink-0">{s.n}</span>
+                              <span className="w-5 h-5 rounded-full bg-gold-100 text-gold-700 text-[13px] font-bold flex items-center justify-center shrink-0">{s.n}</span>
                               <button onClick={() => openSource(s)} className="text-sm font-semibold text-agri-800 hover:underline inline-flex items-center gap-1">
                                 <FilePdf size={16} weight="duotone" />{s.kind === 'article' ? t.libOpenSource : fmt(t.libPage, { n: s.page })}
                               </button>
@@ -270,7 +293,7 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
       <div className="p-3 border-t border-gray-100 bg-paper">
         {msgs.length <= 1 && suggestions.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5">{t.libSuggested}</p>
+            <p className="text-[15px] font-semibold text-gray-600 mb-1.5">{t.libSuggested}</p>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {suggestions.map((q, i) => (
                 <button key={i} onClick={() => send(q)} className="shrink-0 max-w-[280px] text-left px-3 py-2 rounded-2xl bg-agri-50 border border-agri-100 text-agri-900 text-sm hover:border-agri-300">{q}</button>
@@ -281,7 +304,7 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
         <div className="flex items-center gap-2 bg-gray-50 rounded-full border border-gray-200 focus-within:ring-2 focus-within:ring-agri-200 pl-1.5 pr-1.5">
           <MicButton lang={lang} onText={(txt) => setInput(txt)} />
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
-            placeholder={book ? t.libAskPlaceholder : t.libAskAllPlaceholder} className="flex-1 min-w-0 bg-transparent py-3.5 outline-none text-lg placeholder-gray-400" />
+            placeholder={book ? t.libAskPlaceholder : t.libAskAllPlaceholder} className="flex-1 min-w-0 bg-transparent py-3.5 outline-hidden text-lg placeholder:text-gray-500" />
           <button onClick={() => send()} disabled={!input.trim() || busy} aria-label={t.send || 'Send'}
             className="w-11 h-11 rounded-full bg-agri-700 text-white flex items-center justify-center disabled:bg-gray-300 shrink-0"><Send size={18} /></button>
         </div>
@@ -308,7 +331,7 @@ const BookView: React.FC<{ lang: Language; user: Farmer; book: Book; books: Book
           <BookCover book={book} lang={lang} size="md" caption={false} />
           <div className="flex-1 min-w-0 lg:mt-4">
             <h2 className="text-xl md:text-2xl font-semibold text-ink leading-tight">{pick(book.title, lang)}</h2>
-            <p className="text-gray-600 mt-1">{[book.publisher, book.year].filter(Boolean).join(' · ')}</p>
+            <p className="text-gray-600 mt-1">{[book.publisher, book.year].filter(Boolean).join(', ')}</p>
             <div className="flex flex-wrap gap-1.5 mt-2">
               <span className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1" style={{ background: TONES[c.tone].bg, color: TONES[c.tone].fg }}>
                 <c.icon size={14} weight="duotone" />{(t as any)[`cat_${book.category}`]}
@@ -328,13 +351,13 @@ const BookView: React.FC<{ lang: Language; user: Farmer; book: Book; books: Book
         </div>
         {summary && (
           <div className="bg-paper rounded-2xl border border-gray-200 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">{t.libAbout}</p>
+            <p className="text-[15px] font-semibold text-gray-600 mb-1">{t.libAbout}</p>
             <p className="text-gray-800 leading-relaxed">{summary}</p>
           </div>
         )}
         {book.headings?.length > 0 && (
           <details className="bg-paper rounded-2xl border border-gray-200 p-4 group">
-            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-500">{t.libInside}</summary>
+            <summary className="cursor-pointer text-[15px] font-semibold text-gray-600">{t.libInside}</summary>
             <ul className="mt-2 space-y-1 text-sm text-gray-700 list-disc pl-5">{book.headings.slice(0, 12).map((h, i) => <li key={i}>{h}</li>)}</ul>
           </details>
         )}
@@ -429,7 +452,7 @@ const AddBook: React.FC<{ lang: Language; onClose: () => void; onOpenBook: (id: 
                 const done = job.status === 'ready' || i < stageIdx;
                 const active = i === stageIdx && ['queued', 'running'].includes(job.status);
                 return (
-                  <li key={s} className={`flex items-center gap-3 ${done || active ? 'text-gray-900' : 'text-gray-400'}`}>
+                  <li key={s} className={`flex items-center gap-3 ${done || active ? 'text-gray-900' : 'text-gray-500'}`}>
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${done ? 'bg-agri-700 text-white' : active ? 'bg-gold-500 text-ink' : 'bg-gray-200'}`}>
                       {done ? <CheckCircle size={18} weight="fill" /> : active ? <Loader2 size={15} className="animate-spin" /> : null}
                     </span>
@@ -542,6 +565,8 @@ const Library: React.FC<{ lang: Language; user: Farmer; onBack: () => void }> = 
   }, [books]);
   const byCategory = useMemo(() => CATEGORY_ORDER.map((c) => [c, books.filter((b) => b.category === c)] as const).filter(([, l]) => l.length), [books]);
   const mine = books.filter((b) => b.mine);
+  const myCropKeys = (user.crops || []).map(cropKey);
+  const forMyCrops = myCropKeys.length ? books.filter((b) => (b.crops || []).some((c) => myCropKeys.includes(cropKey(c)))) : [];
   const fromFarmers = books.filter((b) => b.origin === 'upload' || b.origin === 'url');
   const newest = [...books].sort((a, b) => b.createdAt - a.createdAt).slice(0, 12);
 
@@ -624,9 +649,9 @@ const Library: React.FC<{ lang: Language; user: Farmer; onBack: () => void }> = 
               <div className="relative p-5 md:p-7 flex gap-5 md:gap-7 items-center">
                 <div className="hidden min-[440px]:block"><BookCover book={featured} lang={lang} size="md" caption={false} onClick={() => openBook(featured.id)} /></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gold-300 text-sm font-semibold uppercase tracking-[0.14em]">{t.libFeatured}</p>
+                  <p className="text-gold-300 font-semibold">{t.libFeatured}</p>
                   <h2 className="font-display text-2xl md:text-[2rem] font-semibold leading-tight mt-1">{pick(featured.title, lang)}</h2>
-                  <p className="text-agri-100 mt-1">{[featured.publisher, featured.year, featured.pages ? fmt(t.libPages, { n: featured.pages }) : ''].filter(Boolean).join(' · ')}</p>
+                  <p className="text-agri-100 mt-1">{[featured.publisher, featured.year, featured.pages ? fmt(t.libPages, { n: featured.pages }) : ''].filter(Boolean).join(', ')}</p>
                   {pick(featured.summary, lang) && <p className="text-agri-50/90 mt-3 leading-relaxed line-clamp-3 max-w-2xl">{pick(featured.summary, lang)}</p>}
                   <div className="flex flex-wrap gap-2 mt-4">
                     <button onClick={() => openBook(featured.id)} className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gold-500 text-ink font-bold hover:bg-gold-300"><Sparkle size={20} weight="duotone" />{t.libAskBook}</button>
@@ -657,6 +682,11 @@ const Library: React.FC<{ lang: Language; user: Farmer; onBack: () => void }> = 
           {mine.length > 0 && (
             <Shelf title={t.libMine} icon={UserCircle} tone="forest" count={mine.length}>
               {mine.map((b) => <BookCover key={b.id} book={b} lang={lang} onClick={() => openBook(b.id)} />)}
+            </Shelf>
+          )}
+          {forMyCrops.length > 0 && (
+            <Shelf title={(t as any).libForMyCrops} icon={Plant} tone="leaf" count={forMyCrops.length}>
+              {forMyCrops.map((b) => <BookCover key={b.id} book={b} lang={lang} onClick={() => openBook(b.id)} />)}
             </Shelf>
           )}
           {byCategory.map(([c, list]) => (

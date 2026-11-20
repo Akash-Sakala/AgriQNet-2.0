@@ -2,7 +2,7 @@
 // screen titles with a Back button. Every choice shows an icon/picture + short text + a tick
 // when selected — never colour alone.
 import React, { useEffect, useRef, useState } from 'react';
-import { Volume2, Square, Mic, MicOff, ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { SpeakerHigh as Volume2, Stop as Square, Microphone as Mic, MicrophoneSlash as MicOff, ArrowLeft, Check, CircleNotch as Loader2 } from '@phosphor-icons/react';
 import { Language } from '../../types';
 import { getTranslation } from '../../utils/translations';
 import { motion } from 'motion/react';
@@ -39,7 +39,7 @@ export const SpeakButton: React.FC<{ text: string | (() => string); lang: Langua
     <span className={`${/\b(absolute|fixed)\b/.test(className) ? '' : 'relative '}inline-flex items-center ${className}`}>
       <button type="button" onClick={onClick} aria-label={playing ? t.stopReading : t.readAloud} title={playing ? t.stopReading : t.readAloud}
         className={`${label ? 'px-4 gap-2 rounded-full h-11' : `${dim} rounded-full justify-center`} inline-flex items-center shrink-0 font-bold transition-colors ${colors}`}>
-        {loading ? <Loader2 size={icon} className="animate-spin" /> : playing ? <Square size={icon - 4} fill="currentColor" /> : <Volume2 size={icon} />}
+        {loading ? <Loader2 size={icon} className="animate-spin" /> : playing ? <Square size={icon - 4} weight="fill" /> : <Volume2 size={icon} />}
         {label && <span className="text-sm">{playing ? t.stopReading : t.listen}</span>}
       </button>
       {hint && <span className="absolute top-full mt-1 right-0 z-30 w-56 bg-gray-900 text-white text-xs rounded-lg p-2 shadow-lg">{t.noVoice}</span>}
@@ -80,9 +80,9 @@ export const MicButton: React.FC<{ lang: Language; onText: (text: string, final:
 /** Text input with a microphone on the right. */
 export const VoiceField: React.FC<{ lang: Language; value: string; onChange: (v: string) => void; placeholder?: string; icon?: React.ReactNode; type?: string }> = ({ lang, value, onChange, placeholder, icon, type = 'text' }) => (
   <div className="flex items-center gap-2 bg-paper border border-gray-200 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-agri-400">
-    {icon && <span className="text-gray-400 shrink-0">{icon}</span>}
+    {icon && <span className="text-gray-500 shrink-0">{icon}</span>}
     <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-      className="flex-1 min-w-0 bg-transparent outline-none text-lg text-gray-900 placeholder-gray-400 py-2" />
+      className="flex-1 min-w-0 bg-transparent outline-hidden text-lg text-gray-900 placeholder:text-gray-500 py-2" />
     <MicButton lang={lang} onText={(txt) => onChange(txt)} />
   </div>
 );
@@ -109,7 +109,7 @@ export function ChoiceGrid<V extends string>({ options, value, onChange, multi =
             className={`relative flex flex-col items-center justify-center text-center rounded-2xl border-2 transition-colors ${size === 'sm' ? 'p-2.5 min-h-[96px]' : 'p-3 min-h-[118px]'} ${on ? 'border-agri-700 bg-agri-50 shadow-soft' : 'border-gray-200 bg-paper hover:border-agri-300'}`}>
             {on && (
               <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 22 }}
-                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-agri-700 text-white flex items-center justify-center ring-2 ring-paper"><Check size={15} strokeWidth={3} /></motion.span>
+                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-agri-700 text-white flex items-center justify-center ring-2 ring-paper"><Check size={15} weight="bold" /></motion.span>
             )}
             {o.img ? <img src={o.img} alt="" className={`${size === 'sm' ? 'w-12 h-12' : 'w-16 h-16'} rounded-xl object-cover mb-2 ring-1 ring-black/5`} />
               : o.swatch ? <span className={`${size === 'sm' ? 'w-11 h-11' : 'w-14 h-14'} rounded-full mb-2 ring-4 ring-paper shadow-[inset_0_-6px_10px_rgba(0,0,0,.18),0_0_0_1px_rgba(0,0,0,.08)]`} style={{ background: o.swatch }} />
@@ -149,9 +149,9 @@ export const ScreenTitle: React.FC<{ lang: Language; icon: string; title: string
 
 /** Plain-language step label: big number circle + text. */
 export const Step: React.FC<{ n: number; title: string; done?: boolean; active?: boolean }> = ({ n, title, done, active }) => (
-  <div className={`flex items-center gap-2 ${active ? 'text-gray-900' : 'text-gray-400'}`}>
-    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${done ? 'bg-agri-700 text-white' : active ? 'bg-gold-500 text-ink' : 'bg-gray-200 text-gray-500'}`}>{done ? <Check size={16} strokeWidth={3} /> : n}</span>
-    <span className="font-semibold text-sm hidden sm:inline">{title}</span>
+  <div className={`flex items-center gap-2 ${active ? 'text-gray-900' : 'text-gray-500'}`}>
+    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${done ? 'bg-agri-700 text-white' : active ? 'bg-gold-500 text-ink' : 'bg-gray-200 text-gray-500'}`}>{done ? <Check size={16} weight="bold" /> : n}</span>
+    <span className="font-semibold text-[15px] leading-tight">{title}</span>
   </div>
 );
 

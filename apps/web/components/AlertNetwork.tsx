@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Map as MapIcon, Siren, Users, Loader2, X, Plus, Search, MapPin, CheckCircle, Sprout, Bug, MessageSquare, Check, Ban, Send } from 'lucide-react';
+import { MapTrifold as MapIcon, Siren, Users, CircleNotch as Loader2, X, Plus, MagnifyingGlass as Search, MapPin, CheckCircle, Plant as Sprout, Bug, ChatText as MessageSquare, Check, Prohibit as Ban, PaperPlaneRight as Send } from '@phosphor-icons/react';
 import { Language, Farmer } from '../types';
 import { ScreenTitle } from './ui/Kit';
 import { motion, AnimatePresence } from 'motion/react';
 import { IconChip, Ico, IdentificationBadge, EnvelopeSimple, CheckCircle as CheckD, XCircle, Warning, Bug as BugD } from './ui/Icons';
-import { getTranslation, fmt, districtName, LOCALES, LANGUAGES } from '../utils/translations';
+import { getTranslation, fmt, districtName, LOCALES, LANGUAGES, sentenceCase } from '../utils/translations';
+import { Sheet, SheetContent } from './ui/sheet';
+import { SeverityMeter } from './ui/Severity';
+import { useMediaQuery } from '../lib/utils';
 import {
   PlatformService, District, Edge, FarmerRow, PestInfo, pestDictionary, localPestName, zonesFor, TwilioSetup,
 } from '../services/platformService';
-import KarnatakaMap, { Zone, ZONE_FILL } from './KarnatakaMap';
+import KarnatakaMap, { Zone, ZONE_FILL, ZONE_PATTERN } from './KarnatakaMap';
 
 /**
  * Alert Network — the former stand-alone Pest Alert dashboard (port 3001), now part of the
@@ -31,7 +34,9 @@ const AlertNetwork: React.FC<{ lang: Language; user: Farmer; onBack: () => void 
   const [pests, setPests] = useState<Record<string, PestInfo>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [selected, setSelected] = useState<string | null>(user.districtId || null);
+  const wide = useMediaQuery('(min-width: 1280px)');
+  // desktop shows details beside the map (start on the farmer's district); phones open a sheet on tap
+  const [selected, setSelected] = useState<string | null>(() => (window.matchMedia('(min-width: 1280px)').matches ? user.districtId || null : null));
   const [focusAlert, setFocusAlert] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [pulse, setPulse] = useState<string[]>([]);
@@ -109,6 +114,52 @@ const AlertNetwork: React.FC<{ lang: Language; user: Farmer; onBack: () => void 
   }, [active, edges, focusAlert]);
 
   const sel = districts.find((d) => d.id === selected);
+  const districtDetails = (sel: District, inSheet = false) => {
+    const z = coverage.zones[sel.id];
+    return (
+      <div className="space-y-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            {!inSheet && <h3 className="text-2xl font-semibold text-ink">{dName(sel.id)}</h3>}
+            {z ? (
+              <span className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full font-semibold bg-paper border border-gray-300 text-ink">
+                <SeverityMeter level={z} size="sm" />{zoneLabel[z]}
+              </span>
+            ) : <span className="inline-block mt-2 px-3 py-1 rounded-full font-semibold bg-agri-50 border border-agri-200 text-agri-800">{t.zoneNone}</span>}
+            {sel.id === user.districtId && <p className="mt-2 text-agri-800 font-semibold">{t.youAreHere}</p>}
+          </div>
+          {!inSheet && <button onClick={() => setSelected(null)} aria-label={t.close} className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-700"><X size={22} /></button>}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {officer && <div className="bg-cream rounded-2xl p-3"><p className="text-gray-600">{t.statFarmers}</p><p className="font-semibold text-lg text-ink">{numFmt.format(farmerCount[sel.id] || 0)}</p></div>}
+          <div className="bg-cream rounded-2xl p-3"><p className="text-gray-600">{t.population}</p><p className="font-semibold text-lg text-ink">{(sel as any).meta?.population ? numFmt.format((sel as any).meta.population) : '—'}</p></div>
+        </div>
+        {sel.majorCrops && sel.majorCrops.length > 0 && (
+          <div>
+            <p className="text-gray-600 mb-2 flex items-center gap-1.5"><Sprout size={18} aria-hidden /> {t.majorCrops}</p>
+            <div className="flex flex-wrap gap-2">{sel.majorCrops.map((c) => <span key={c} className="px-3 py-1 rounded-xl bg-agri-50 text-agri-800">{(t as any)[`crop_${c.toLowerCase().replace(/[^a-z]/g, '')}`] || c}</span>)}</div>
+          </div>
+        )}
+        <div>
+          <p className="font-semibold text-ink mb-2">{t.alertsAffecting}</p>
+          {(coverage.byDistrict[sel.id] || []).length === 0 ? <p className="text-gray-600">{t.noAlertsHere}</p> : (
+            <ul className="space-y-2">
+              {coverage.byDistrict[sel.id].map(({ alert, zone }) => (
+                <li key={alert.id} className="rounded-2xl border border-gray-200 p-3 flex items-start gap-3">
+                  <span className="mt-1"><SeverityMeter level={zone} size="sm" /></span>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-ink">{sentenceCase(localPestName(pests, alert.pestType))}</p>
+                    <p className="text-gray-700">{zoneLabel[zone]}</p>
+                    <p className="text-[15px] text-gray-600">{t.reportedIn} {dName(alert.reportedDistrictId)}, {dateFmt.format(new Date(alert.reportedAt))}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   if (loading) return <div className="flex justify-center py-24"><Loader2 className="animate-spin text-agri-600" size={40} /></div>;
   if (error) return <div className="bg-paper rounded-3xl p-8 text-center text-red-600 border border-red-100">{t.errServer}</div>;
@@ -116,8 +167,32 @@ const AlertNetwork: React.FC<{ lang: Language; user: Farmer; onBack: () => void 
   return (
     <div className="space-y-6">
       <ScreenTitle lang={lang} icon="network" title={t.networkTitle} desc={t.networkDesc} onBack={onBack} />
-      {/* Stats */}
-      <div className="bg-paper p-4 rounded-3xl shadow-soft border border-gray-100">
+      {/* Farmers: what reaches my district. Officers: network numbers. */}
+      {!officer && (() => {
+        const mine = user.districtId ? coverage.byDistrict[user.districtId] || [] : [];
+        return (
+          <section className="bg-paper p-5 rounded-[20px] shadow-soft border border-gray-200" aria-labelledby="near-you">
+            <h2 id="near-you" className="text-xl font-semibold text-ink mb-3">{t.nearYouTitle}</h2>
+            {mine.length === 0 ? (
+              <p className="flex items-center gap-2 text-lg text-agri-800 bg-agri-50 border border-agri-100 rounded-2xl p-4"><Ico icon={CheckD} size={24} />{t.nothingNearYou}</p>
+            ) : (
+              <ul className="space-y-2">
+                {mine.map(({ alert, zone }) => (
+                  <li key={alert.id} className="flex items-center gap-3 border border-gray-200 rounded-2xl p-3">
+                    <SeverityMeter level={zone} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-ink text-lg leading-tight">{sentenceCase(localPestName(pests, alert.pestType))}</p>
+                      <p className="text-gray-700">{zoneLabel[zone]}</p>
+                      <p className="text-[15px] text-gray-600">{t.reportedIn} {dName(alert.reportedDistrictId)}, {dateFmt.format(new Date(alert.reportedAt))}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        );
+      })()}
+      {officer && <div className="bg-paper p-4 rounded-3xl shadow-soft border border-gray-100">
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: t.statDistricts, value: districts.length, icon: MapPin, color: 'text-agri-800 bg-agri-50' },
@@ -130,7 +205,7 @@ const AlertNetwork: React.FC<{ lang: Language; user: Farmer; onBack: () => void 
             </div>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Tabs */}
       <div className="flex bg-gray-100 p-1.5 rounded-2xl w-full md:w-fit overflow-x-auto">
@@ -152,71 +227,47 @@ const AlertNetwork: React.FC<{ lang: Language; user: Farmer; onBack: () => void 
                 <button key={a.id} onClick={() => setFocusAlert(focusAlert === a.id ? null : a.id)}
                   className={`px-3 py-1.5 rounded-full text-sm font-semibold border flex items-center gap-1.5 ${focusAlert === a.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-paper text-gray-700 border-gray-200'}`}>
                   <span className="w-2.5 h-2.5 rounded-full" style={{ background: ZONE_FILL[a.severity] }} />
-                  {localPestName(pests, a.pestType)} · {dName(a.reportedDistrictId)}
+                  {fmt(t.pestInDistrict, { pest: sentenceCase(localPestName(pests, a.pestType)), district: dName(a.reportedDistrictId) })}
                 </button>
               ))}
             </div>
-            <div id="ka-map" className="scroll-mt-24"><KarnatakaMap zones={coverage.zones} labels={labels} selected={selected} onSelect={setSelected} markers={farmerCount} pulse={pulse} /></div>
+            <div id="ka-map" className="scroll-mt-24"><KarnatakaMap zones={coverage.zones} labels={labels} selected={selected} onSelect={setSelected} markers={farmerCount} pulse={pulse}
+              home={user.districtId} homeLabel={t.youAreHere} zoomLabels={{ in: t.zoomIn, out: t.zoomOut, reset: t.showAllMap }} />
+              <p className="mt-2 text-[15px] text-gray-600">{t.mapHint}</p></div>
             {active.length === 0 && (
               <p className="mt-3 flex items-center gap-2 justify-center text-agri-800 bg-agri-50 border border-agri-100 rounded-2xl p-3"><Ico icon={CheckD} size={22} />{t.noActiveMap}</p>
             )}
             {/* Legend: colour + text, never colour alone */}
-            <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-700">
+            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4 text-gray-700">
               {(['RED', 'ORANGE', 'YELLOW'] as Zone[]).map((z) => (
-                <span key={z} className="flex items-center gap-2"><span className="w-4 h-4 rounded" style={{ background: ZONE_FILL[z] }} />{zoneLabel[z]}</span>
+                <span key={z} className="flex items-center gap-2">
+                  <svg width="22" height="22" aria-hidden className="rounded shrink-0"><rect width="22" height="22" fill={ZONE_FILL[z]} />{ZONE_PATTERN[z] && <rect width="22" height="22" fill={ZONE_PATTERN[z]} />}</svg>
+                  <SeverityMeter level={z} size="sm" />{zoneLabel[z]}
+                </span>
               ))}
               <span className="flex items-center gap-2"><span className="w-4 h-4 rounded border border-gray-200" style={{ background: ZONE_FILL.NONE }} />{t.zoneNone}</span>
               {officer && <span className="flex items-center gap-2"><span className="w-4 h-4 rounded-full bg-green-800" />{t.statFarmers}</span>}
             </div>
           </div>
 
-          {/* District details */}
-          <div className="bg-paper rounded-3xl shadow-soft border border-gray-100 p-6">
-            {!sel ? (
-              <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 py-12">
-                <MapPin size={40} className="mb-3 opacity-40" />
-                <p className="text-base">{t.tapDistrict}</p>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900">{dName(sel.id)}</h3>
-                    {coverage.zones[sel.id] ? (
-                      <span className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full text-sm font-bold" style={{ background: ZONE_FILL[coverage.zones[sel.id]] + '33', color: '#7f1d1d' }}>
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: ZONE_FILL[coverage.zones[sel.id]] }} />{zoneLabel[coverage.zones[sel.id]]}
-                      </span>
-                    ) : <span className="inline-block mt-2 px-3 py-1 rounded-full text-sm font-bold bg-green-50 text-green-700">{t.zoneNone}</span>}
-                  </div>
-                  <button onClick={() => setSelected(null)} aria-label={t.close} className="text-gray-400 hover:text-gray-600"><X size={22} /></button>
+          {/* District details: beside the map on wide screens, a bottom sheet on phones */}
+          {wide && (
+            <div className="bg-paper rounded-[20px] shadow-soft border border-gray-200 p-6">
+              {!sel ? (
+                <div className="h-full flex flex-col items-center justify-center text-center text-gray-600 py-12">
+                  <MapPin size={40} className="mb-3 opacity-50" aria-hidden />
+                  <p>{t.tapDistrict}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  {officer && <div className="bg-gray-50 rounded-xl p-3"><p className="text-gray-500">{t.statFarmers}</p><p className="font-bold text-lg">{numFmt.format(farmerCount[sel.id] || 0)}</p></div>}
-                  <div className="bg-gray-50 rounded-xl p-3"><p className="text-gray-500">{t.population}</p><p className="font-bold text-lg">{sel && (sel as any).meta?.population ? numFmt.format((sel as any).meta.population) : '—'}</p></div>
-                </div>
-                {sel.majorCrops && sel.majorCrops.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-500 mb-2 flex items-center gap-1"><Sprout size={14} /> {t.majorCrops}</p>
-                    <div className="flex flex-wrap gap-2">{sel.majorCrops.map((c) => <span key={c} className="px-2.5 py-1 rounded-lg bg-agri-50 text-agri-800 text-sm">{(t as any)[`crop_${c.toLowerCase().replace(/[^a-z]/g, '')}`] || c}</span>)}</div>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm font-bold text-gray-800 mb-2">{t.alertsAffecting}</p>
-                  {(coverage.byDistrict[sel.id] || []).length === 0 ? <p className="text-sm text-gray-500">{t.noAlertsHere}</p> : (
-                    <ul className="space-y-2">
-                      {coverage.byDistrict[sel.id].map(({ alert, zone }) => (
-                        <li key={alert.id} className="rounded-xl border border-gray-100 p-3 text-sm">
-                          <div className="flex items-center gap-2 font-semibold text-gray-800"><Bug size={14} className="text-red-500" />{localPestName(pests, alert.pestType)}</div>
-                          <p className="text-gray-500 mt-0.5">{zoneLabel[zone]} · {t.reportedIn} {dName(alert.reportedDistrictId)} · {dateFmt.format(new Date(alert.reportedAt))}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+              ) : districtDetails(sel)}
+            </div>
+          )}
         </div>
+      )}
+
+      {!wide && (
+        <Sheet open={!!sel} onOpenChange={(o) => !o && setSelected(null)}>
+          {sel && <SheetContent title={dName(sel.id)} closeLabel={t.close}>{districtDetails(sel, true)}</SheetContent>}
+        </Sheet>
       )}
 
       {tab === 'alerts' && (
@@ -429,7 +480,7 @@ const FarmersTab: React.FC<{
     <div className="bg-paper rounded-3xl shadow-soft border border-gray-100 p-4 md:p-6 space-y-4">
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-3.5 text-gray-400" />
+          <Search size={16} className="absolute left-3 top-3.5 text-gray-500" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.searchFarmers} className="w-full pl-9 p-3 bg-gray-50 border border-gray-200 rounded-xl" />
         </div>
         <select value={district} onChange={(e) => setDistrict(e.target.value)} className="p-3 bg-gray-50 border border-gray-200 rounded-xl">

@@ -11,7 +11,7 @@ export interface OtpSendResult {
 
 /** OTP + SMS via the AgriQNet API (Twilio on the server, or simulation). */
 export const TwilioService = {
-  async sendOTP(phone: string, message?: string, purpose: 'signup' | 'subscribe' = 'signup', lang = 'en'): Promise<OtpSendResult> {
+  async sendOTP(phone: string, message?: string, purpose: 'signup' | 'subscribe' | 'login' = 'signup', lang = 'en'): Promise<OtpSendResult> {
     try {
       const r = await api<{ success: boolean; isMock: boolean; devOtp?: string }>('/otp/send', {
         method: 'POST',
@@ -23,7 +23,7 @@ export const TwilioService = {
     }
   },
 
-  async verifyOTP(phone: string, otp: string, purpose: 'signup' | 'subscribe' = 'signup'): Promise<boolean> {
+  async verifyOTP(phone: string, otp: string, purpose: 'signup' | 'subscribe' | 'login' = 'signup'): Promise<boolean> {
     try {
       const r = await api<{ success: boolean }>('/otp/verify', { method: 'POST', json: { phone, otp, purpose } });
       return r.success;

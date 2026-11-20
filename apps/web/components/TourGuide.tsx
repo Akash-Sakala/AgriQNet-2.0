@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, CaretRight as ChevronRight, CaretLeft as ChevronLeft } from '@phosphor-icons/react';
 import { motion } from 'motion/react';
 import { Language } from '../types';
 import { getTranslation, fmt } from '../utils/translations';

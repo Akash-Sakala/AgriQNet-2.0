@@ -1,7 +1,7 @@
 // Catches a crash inside one screen so the rest of the app (header, bottom bar) keeps working.
 // The farmer sees a plain message in their language with Try again / Go to Home, never a blank page.
 import React from 'react';
-import { RotateCcw, Home as HomeIcon } from 'lucide-react';
+import { ArrowCounterClockwise as RotateCcw, House as HomeIcon } from '@phosphor-icons/react';
 import { Language } from '../../types';
 import { getTranslation } from '../../utils/translations';
 import { IconChip, Warning } from './Icons';
