@@ -22,18 +22,21 @@ const checkUser = ah(async (req, res) => {
   res.json({ exists: Boolean(await User.exists({ phone })) });
 });
 
+/** A signup code for this phone was verified in the last 30 minutes. */
+const signupVerified = (phone) => Otp.exists({ phone, purpose: 'signup', verifiedAt: { $gte: new Date(Date.now() - 30 * 60000) } });
+
 const register = ah(async (req, res) => {
-  const { name, location = '', password } = req.body;
+  const { location = '', password } = req.body;
   const phone = normalizePhone(req.body.phone);
-  if (!name || !phone || !password) return res.status(400).json({ message: 'name, phone and password are required' });
-  if (password.length < 4) return res.status(400).json({ message: 'Password must be at least 4 characters' });
+  // Name is optional for farmers (asked last in onboarding); the phone's last digits stand in.
+  const name = String(req.body.name || '').trim() || `Farmer ${phone.slice(-4)}`;
+  if (!phone) return res.status(400).json({ message: 'phone is required' });
+  if (password && password.length < 4) return res.status(400).json({ message: 'Password must be at least 4 characters' });
   if (await User.exists({ phone })) return res.status(400).json({ message: 'User already exists' });
 
-  if (config.otp.requireForSignup) {
-    const verified = await Otp.findOne({
-      phone, purpose: 'signup', verifiedAt: { $gte: new Date(Date.now() - 30 * 60000) },
-    });
-    if (!verified) return res.status(403).json({ message: 'Phone number not verified. Please complete OTP verification.' });
+  // Passwordless sign-up (phone + code) always needs a verified code; password sign-up only when configured.
+  if (!password || config.otp.requireForSignup) {
+    if (!(await signupVerified(phone))) return res.status(403).json({ message: 'Phone number not verified. Please complete OTP verification.' });
   }
 
   const lang = normLang(req.body.lang);
@@ -42,7 +45,9 @@ const register = ah(async (req, res) => {
   if (!district) return res.status(400).json({ message: 'Please choose your district' });
   const crops = Array.isArray(req.body.crops) ? req.body.crops.slice(0, 8).map(String) : [];
   const user = await User.create({
-    name, phone, location: location || district.name, lang, crops, districtId: district.id, passwordHash: await bcrypt.hash(password, 10),
+    name, phone, location: location || district.name, lang, crops, districtId: district.id,
+    // passwordless accounts get an unguessable hash: they sign in with a code (/auth/otp-login)
+    passwordHash: await bcrypt.hash(password || crypto.randomBytes(24).toString('hex'), 10),
   });
 
   // Every registered farmer automatically becomes a pest-alert recipient for their district.
@@ -69,7 +74,26 @@ const login = ah(async (req, res) => {
   res.json({ success: true, user: user.toPublic(), token: issueToken(user) });
 });
 
+// Sign in with phone + one-time code (no password). The code is requested with /otp/send purpose "login".
+const otpLogin = ah(async (req, res) => {
+  const phone = normalizePhone(req.body.phone);
+  const code = String(req.body.otp || req.body.code || '').trim();
+  const user = await User.findOne({ phone });
+  if (!user) return res.status(404).json({ message: 'Phone number not found' });
+  const otp = await Otp.findOne({ phone, purpose: 'login', verifiedAt: null, expiresAt: { $gt: new Date() } }).sort({ expiresAt: -1 });
+  if (!otp) return res.status(400).json({ message: 'Code expired or not requested' });
+  if (otp.attempts >= 5) return res.status(429).json({ message: 'Too many attempts. Request a new code.' });
+  if (otp.codeHash !== hashOtp(phone, code)) {
+    otp.attempts += 1;
+    await otp.save();
+    return res.status(400).json({ message: 'Wrong code' });
+  }
+  await Otp.deleteMany({ phone, purpose: 'login' });
+  res.json({ success: true, user: user.toPublic(), token: issueToken(user) });
+});
+
 router.post('/auth/check-user', checkUser);
+router.post('/auth/otp-login', otpLogin);
 router.post('/auth/register', register);
 router.post('/auth/login', login);
 // Update language / district / crops / name of the logged-in user (keeps the alert subscription in sync)

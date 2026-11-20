@@ -30,6 +30,14 @@ export const DBService = {
     return user;
   },
 
+  /** Sign in with phone + one-time code (no password). Throws with the server message on failure. */
+  async otpLogin(phone: string, otp: string): Promise<Farmer> {
+    const data = await api<{ user: Farmer; token: string }>('/auth/otp-login', { method: 'POST', json: { phone, otp } });
+    const user = { ...data.user, token: data.token };
+    this.cacheUser(user);
+    return user;
+  },
+
   async verifyLogin(phone: string, password: string): Promise<Farmer | null> {
     try {
       const data = await api<{ success: boolean; user: Farmer; token: string }>('/auth/login', { method: 'POST', json: { phone, password } });

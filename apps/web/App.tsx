@@ -96,7 +96,7 @@ const App: React.FC = () => {
   const logout = () => { DBService.logout(); setUser(null); setView('home'); setHistory([]); setMenuOpen(false); };
 
   if (!langChosen) return <LanguageGate onPick={setLang} />;
-  if (!user) return <AuthPage lang={activeLang} onLogin={(u) => { setUser(u); setView('home'); }} onLangChange={setLang} />;
+  if (!user) return <AuthPage lang={activeLang} onLogin={(u) => { setUser(u); setView('home'); window.scrollTo({ top: 0 }); }} onLangChange={setLang} />;
 
   const place = districtName(t, user.districtId || '', user.location);
   // The App Tour: every feature, in the order a new farmer meets them on the home screen.
