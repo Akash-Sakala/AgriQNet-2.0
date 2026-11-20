@@ -1,7 +1,7 @@
 
 
 import { Ico, MapPin as PinD, Mountains, Drop, Ruler } from './ui/Icons';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sprout, Droplets, FlaskConical, MapPin, Loader2, CheckCircle, Clock, TrendingUp, DollarSign, X, Sun, Info, Leaf, Activity, BrainCircuit } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
 import { PlatformService } from '../services/platformService';
@@ -12,6 +12,7 @@ import { MlExtras, MlDetails } from './ui/MlExtras';
 import DistrictPicker from './DistrictPicker';
 import { soilChoices, waterChoices, sizeChoices } from '../utils/farmOptions';
 import { useLocalized } from '../utils/useLocalized';
+import { normalizeCrops } from '../services/aiNormalize';
 import appleImg from '../images/apple.jpeg';
 import bananaImg from '../images/banana.jpeg';
 import blackgramImg from '../images/blackgram.jpeg';
@@ -144,8 +145,10 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
 
   // AI results follow the language switch (translated, not re-generated)
   const recs = useLocalized<CropRecommendation[]>('agriqnet_crop_recs', lang, []);
-  const recommendations = recs.value;
+  // Normalized on read too: results saved on this device (or translated) may predate the checks.
+  const recommendations = useMemo(() => normalizeCrops(recs.value), [recs.value]);
   const setRecommendations = recs.setValue;
+  const [recErr, setRecErr] = useState('');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ soilData, genAIParams }));
@@ -178,6 +181,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
 
   const handleRecommend = async () => {
   setLoading(true);
+  setRecErr('');
   try {
     const currentDate = new Date();
     const dateString = currentDate.toLocaleDateString('en-IN', {
@@ -223,10 +227,12 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
     `;
 
     const results = await GeminiService.recommendCrops(prompt, lang, { districtId: genAIParams.districtId, crops: user.crops });
-    setRecommendations(results);
+    const crops = normalizeCrops(results);
+    if (!crops.length) throw new Error('AI returned no usable crops');
+    setRecommendations(crops);
   } catch (err) {
     console.error(err);
-    alert(t.errRecommend);
+    setRecErr(t.errRecommend);
   } finally {
     setLoading(false);
   }
@@ -329,7 +335,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                   <div className="bg-gold-100 p-4 rounded-2xl border border-gold-100 text-center">
                     <DollarSign className="mx-auto text-gold-700 mb-2" size={24} />
                     <div className="text-xs text-gray-500 uppercase font-bold">{t.economy}</div>
-                    <div className="text-xl font-bold text-gray-800 leading-tight text-sm md:text-base mt-1 line-clamp-2">{selectedCrop.economicAnalysis.split('.')[0]}</div>
+                    <div className="text-xl font-bold text-gray-800 leading-tight text-sm md:text-base mt-1 line-clamp-2">{selectedCrop.economicAnalysis.split('.')[0] || '—'}</div>
                   </div>
                </div>
 
@@ -353,6 +359,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                      <Leaf size={20} className="text-agri-600" /> {t.requirements}
                    </h3>
                    <div className="space-y-3">
+                      {selectedCrop.requirements.water && (<>
                       <div className="flex items-start gap-3 p-3 bg-paper border border-gray-100 rounded-xl shadow-soft">
                         <div className="p-2 bg-agri-100 text-agri-700 rounded-lg"><Droplets size={18} /></div>
                         <div>
@@ -360,6 +367,8 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                           <p className="text-sm font-medium text-gray-700">{selectedCrop.requirements.water}</p>
                         </div>
                       </div>
+                      </>)}
+                      {selectedCrop.requirements.sun && (<>
                       <div className="flex items-start gap-3 p-3 bg-paper border border-gray-100 rounded-xl shadow-soft">
                         <div className="p-2 bg-gold-100 text-gold-700 rounded-lg"><Sun size={18} /></div>
                         <div>
@@ -367,6 +376,8 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                           <p className="text-sm font-medium text-gray-700">{selectedCrop.requirements.sun}</p>
                         </div>
                       </div>
+                      </>)}
+                      {selectedCrop.requirements.soil && (<>
                       <div className="flex items-start gap-3 p-3 bg-paper border border-gray-100 rounded-xl shadow-soft">
                         <div className="p-2 bg-amber-100 text-amber-700 rounded-lg"><MapPin size={18} /></div>
                         <div>
@@ -374,6 +385,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                           <p className="text-sm font-medium text-gray-700">{selectedCrop.requirements.soil}</p>
                         </div>
                       </div>
+                      </>)}
                    </div>
                  </div>
                </div>
@@ -554,6 +566,12 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
           ) : (
             // GenAI Results Grid
             <div className="h-full">
+              {recErr && !loading && (
+                <div role="alert" className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800">
+                  <p className="flex-1 font-semibold">{recErr}</p>
+                  <button type="button" onClick={handleRecommend} className="shrink-0 min-h-[48px] px-5 rounded-2xl bg-agri-700 hover:bg-agri-800 text-white font-bold">{t.retry}</button>
+                </div>
+              )}
               {recommendations.length === 0 && !loading ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-white/50 border-2 border-dashed border-gray-200 rounded-3xl p-12">
                   <Sprout size={48} className="mb-4 text-gray-300" />
@@ -581,21 +599,25 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                         <div className="p-5">
                           <div className="flex items-start justify-between gap-2">
                             <h3 className="text-xl font-bold text-gray-800 mb-1">{crop.name}</h3>
-                            <SpeakButton text={`${crop.name}. ${crop.description}. ${crop.requirements.water}. ${crop.growthPeriod}`} lang={lang} size="sm" />
+                            <SpeakButton text={[crop.name, crop.description, crop.requirements.water, crop.growthPeriod].filter(Boolean).join('. ')} lang={lang} size="sm" />
                           </div>
                           <p className="text-xs text-gray-400 italic mb-3">{crop.scientificName}</p>
                           
                           <p className="text-gray-700 text-base mb-4 line-clamp-3">{crop.description}</p>
                           
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <Droplets size={14} className="text-agri-500" />
-                              <span>{crop.requirements.water}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <Sun size={14} className="text-gold-700" />
-                              <span>{crop.requirements.sun}</span>
-                            </div>
+                            {crop.requirements.water && (
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <Droplets size={14} className="text-agri-500" />
+                                <span>{crop.requirements.water}</span>
+                              </div>
+                            )}
+                            {crop.requirements.sun && (
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <Sun size={14} className="text-gold-700" />
+                                <span>{crop.requirements.sun}</span>
+                              </div>
+                            )}
                           </div>
                           
                           <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center">

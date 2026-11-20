@@ -83,13 +83,25 @@ function schemaExample(sc) {
   return sc.enum ? sc.enum.join('|') : (sc.description || sc.type);
 }
 
+/** Gemini treats every schema property as optional unless it is listed in `required`, and then
+ *  often leaves most of them out (a crop with only a name). Mark all declared properties required. */
+function requireAll(sc) {
+  if (!sc || typeof sc !== 'object') return sc;
+  if (sc.type === Type.ARRAY) return { ...sc, items: requireAll(sc.items) };
+  if (sc.type === Type.OBJECT && sc.properties) {
+    const properties = Object.fromEntries(Object.entries(sc.properties).map(([k, v]) => [k, requireAll(v)]));
+    return { ...sc, properties, required: sc.required || Object.keys(properties) };
+  }
+  return sc;
+}
+
 async function generateJson(contents, schema) {
   const textOnly = typeof contents === 'string';
   const res = await withModels(
     (model) => client().models.generateContent({
       model,
       contents,
-      config: { responseMimeType: 'application/json', responseSchema: schema },
+      config: { responseMimeType: 'application/json', responseSchema: requireAll(schema) },
     }),
     textOnly ? async () => {
       const isArray = schema.type === Type.ARRAY;

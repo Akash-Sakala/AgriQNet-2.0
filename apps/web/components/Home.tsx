@@ -6,6 +6,7 @@ import { Farmer, Language, NavView } from '../types';
 import { getTranslation, districtName, fmt } from '../utils/translations';
 import { PlatformService, DistrictAdvice, WeatherAlert, zonesFor } from '../services/platformService';
 import { api } from '../services/config';
+import { normalizeAdvice } from '../services/aiNormalize';
 import { SpeakButton } from './ui/Kit';
 import { pestLabel } from '../utils/pests';
 import { Books } from './ui/Icons';
@@ -67,7 +68,12 @@ const Home: React.FC<{ lang: Language; user: Farmer; onNavigate: (v: NavView) =>
     setAdviceLoading(true);
     setAdviceErr(false);
     PlatformService.advice(user.districtId, user.crops || [], lang)
-      .then((a) => { setAdvice(a); adviceMem.set(k, a); })
+      .then((raw) => {
+        const a = normalizeAdvice(raw);
+        if (!a) { setAdviceErr(true); return; }
+        setAdvice(a);
+        adviceMem.set(k, a);
+      })
       .catch(() => setAdviceErr(true))
       .finally(() => setAdviceLoading(false));
   };

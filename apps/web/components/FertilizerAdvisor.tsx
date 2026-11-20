@@ -1,6 +1,6 @@
 
 import { Ico, Plant, Mountains, PencilSimple } from './ui/Icons';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FlaskConical, Leaf, AlertCircle, Loader2, Calendar, Scale, BrainCircuit, Activity, Sprout } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
 import { PlatformService } from '../services/platformService';
@@ -10,6 +10,7 @@ import { ScreenTitle, SpeakButton, ChoiceGrid, VoiceField } from './ui/Kit';
 import { MlExtras, MlDetails } from './ui/MlExtras';
 import { cropChoices, soilChoices } from '../utils/farmOptions';
 import { useLocalized } from '../utils/useLocalized';
+import { normalizeFertilizerPlans } from '../services/aiNormalize';
 
 interface FertilizerAdvisorProps {
   lang: Language;
@@ -39,7 +40,7 @@ const FertilizerAdvisor: React.FC<FertilizerAdvisorProps> = ({ lang, user, onBac
   const [soilType, setSoilType] = useState(savedData.soilType && savedData.soilType.includes('Soil') ? savedData.soilType : 'Red Soil');
   // AI plans follow the language switch (translated, not re-generated)
   const plansStore = useLocalized<FertilizerPlan[]>('agriqnet_fert_plans', lang, []);
-  const plans = plansStore.value;
+  const plans = useMemo(() => normalizeFertilizerPlans(plansStore.value), [plansStore.value]);
   const setPlans = plansStore.setValue;
   // The farmer's own crops first
   const allCrops = cropChoices(t);
@@ -64,7 +65,7 @@ const FertilizerAdvisor: React.FC<FertilizerAdvisorProps> = ({ lang, user, onBac
     setLoading(true);
     try {
       const results = await GeminiService.recommendFertilizer(cropToSend, soilType, lang, { districtId: user.districtId, crops: user.crops });
-      setPlans(results);
+      setPlans(normalizeFertilizerPlans(results));
     } catch (err) {
       console.error(err);
       alert(t.errFertGenAi);

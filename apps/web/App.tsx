@@ -18,6 +18,7 @@ import AuthPage from './components/AuthPage';
 import LanguageGate from './components/LanguageGate';
 import DistrictPicker from './components/DistrictPicker';
 import { ChoiceGrid } from './components/ui/Kit';
+import { ScreenErrorBoundary } from './components/ui/ScreenErrorBoundary';
 import { cropChoices } from './utils/farmOptions';
 import { DBService } from './services/dbService';
 import { stopSpeaking } from './utils/speech';
@@ -205,7 +206,9 @@ const App: React.FC = () => {
           {/* Screen change: a short cross-fade with a small rise, so it is clear the page changed */}
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
-              {screen()}
+              <ScreenErrorBoundary lang={activeLang} name={view} onHome={view === 'home' ? undefined : () => go('home')}>
+                {screen()}
+              </ScreenErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </main>
