@@ -41,7 +41,7 @@ const DistrictPicker: React.FC<{ lang: Language; value: string; onChange: (id: s
             <button onClick={() => setOpen(false)} aria-label={t.close} className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center shrink-0"><X /></button>
             <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl pl-3 pr-1.5 py-1.5">
               <Search size={20} className="text-gray-400" />
-              <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.searchDistrict} className="flex-1 min-w-0 bg-transparent outline-none text-lg py-1.5" />
+              <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.searchDistrict} className="flex-1 min-w-0 bg-transparent outline-hidden text-lg py-1.5" />
               <MicButton lang={lang} onText={(txt) => setQ(txt)} />
             </div>
           </div>

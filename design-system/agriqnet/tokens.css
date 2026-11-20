@@ -38,8 +38,8 @@
 
   /* shape + depth */
   --radius-control: 12px; --radius-card: 20px; --radius-sheet: 28px;
-  --shadow-soft: 0 1px 2px rgba(30,42,36,.05), 0 6px 18px -8px rgba(30,42,36,.12);
-  --shadow-lift: 0 2px 4px rgba(30,42,36,.06), 0 16px 32px -12px rgba(30,42,36,.22);
+  --elev-soft: 0 1px 2px rgba(30,42,36,.05), 0 6px 18px -8px rgba(30,42,36,.12);
+  --elev-lift: 0 2px 4px rgba(30,42,36,.06), 0 16px 32px -12px rgba(30,42,36,.22);
 
   /* motion */
   --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 320ms; --dur-hero: 600ms;
@@ -57,11 +57,12 @@
 /* Sunlight: high contrast for reading outdoors */
 [data-theme="sun"] {
   --cream: #FFFFFF; --paper: #FFFFFF; --ink: #0F1A14;
-  --gray-50: #FAFAFA; --gray-100: #F2F2F2; --gray-200: #1E2A24; --gray-300: #0F1A14; --gray-400: #3D372E;
+  --gray-50: #FAFAFA; --gray-100: #F0F0F0; --gray-200: #DADADA; --gray-300: #9A9A9A; --gray-400: #3D372E;
   --gray-500: #1E2A24; --gray-600: #1E2A24; --gray-700: #0F1A14; --gray-800: #0F1A14; --gray-900: #0F1A14;
+  --border: #0F1A14; --border-strong: #0F1A14; --text-muted: #1E2A24;
   --agri-50: #E4EFE7; --agri-100: #D2E4D7;
   --primary: var(--agri-900);
   --danger: var(--clay-700); --warning: var(--amber-700); --success: var(--agri-800);
   --ring: #0F1A14; --ring-width: 4px; --control-border: 2px;
-  --shadow-soft: 0 0 0 2px #0F1A14; --shadow-lift: 0 0 0 2px #0F1A14, 0 8px 16px -8px rgba(0,0,0,.35);
+  --elev-soft: 0 0 0 2px #0F1A14; --elev-lift: 0 0 0 2px #0F1A14, 0 8px 16px -8px rgba(0,0,0,.35);
 }

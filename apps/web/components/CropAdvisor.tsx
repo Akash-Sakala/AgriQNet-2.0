@@ -292,7 +292,7 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
 
       {/* Detailed View Modal */}
       {selectedCrop && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-paper rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-300 relative">
             <button 
               onClick={() => setSelectedCrop(null)}
@@ -458,21 +458,21 @@ const CropAdvisor: React.FC<CropAdvisorProps> = ({ lang, user, onBack }) => {
                   <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                      <div>
                        <label className="block text-sm font-medium text-gray-700 mb-1">{t.temperature}</label>
-                       <input type="number" name="temperature" value={extraParams.temperature} onChange={handleExtraParamChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900" />
+                       <input type="number" name="temperature" value={extraParams.temperature} onChange={handleExtraParamChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-hidden text-gray-900" />
                      </div>
                      <div>
                        <label className="block text-sm font-medium text-gray-700 mb-1">{t.humidity} (%)</label>
-                       <input type="number" name="humidity" value={extraParams.humidity} onChange={handleExtraParamChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900" />
+                       <input type="number" name="humidity" value={extraParams.humidity} onChange={handleExtraParamChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-hidden text-gray-900" />
                      </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">{t.phLevel}</label>
-                      <input type="number" name="ph" step="0.1" value={soilData.ph} onChange={handleInputChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 outline-none focus:ring-blue-500 text-gray-900" />
+                      <input type="number" name="ph" step="0.1" value={soilData.ph} onChange={handleInputChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 outline-hidden focus:ring-blue-500 text-gray-900" />
                     </div>
                     <div>
                        <label className="block text-sm font-medium text-gray-700 mb-1">{t.rainfall}</label>
-                      <input type="number" name="rainfall" value={soilData.rainfall} onChange={handleInputChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 outline-none focus:ring-blue-500 text-gray-900" />
+                      <input type="number" name="rainfall" value={soilData.rainfall} onChange={handleInputChange} className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 outline-hidden focus:ring-blue-500 text-gray-900" />
                     </div>
                   </div>
                 </>

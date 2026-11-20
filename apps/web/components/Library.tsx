@@ -75,7 +75,7 @@ export const BookCover: React.FC<{ book: Book; lang: Language; size?: 'sm' | 'md
             </div>
           </>
         )}
-        <span className="absolute top-2 left-3 inline-flex items-center gap-1 rounded-full bg-paper/90 backdrop-blur px-1.5 py-1 shadow-sm" title={(t as any)[`cat_${book.category}`]}>
+        <span className="absolute top-2 left-3 inline-flex items-center gap-1 rounded-full bg-paper/90 backdrop-blur px-1.5 py-1 shadow-xs" title={(t as any)[`cat_${book.category}`]}>
           <c.icon size={14} weight="duotone" style={{ color: TONES[c.tone].fg }} aria-hidden />
           {book.kind === 'article' && <span className="text-[10px] font-bold text-gray-700 pr-0.5">{t.libArticle}</span>}
         </span>
@@ -281,7 +281,7 @@ export const BookChat: React.FC<{ lang: Language; book: Book | null; books: Book
         <div className="flex items-center gap-2 bg-gray-50 rounded-full border border-gray-200 focus-within:ring-2 focus-within:ring-agri-200 pl-1.5 pr-1.5">
           <MicButton lang={lang} onText={(txt) => setInput(txt)} />
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
-            placeholder={book ? t.libAskPlaceholder : t.libAskAllPlaceholder} className="flex-1 min-w-0 bg-transparent py-3.5 outline-none text-lg placeholder-gray-400" />
+            placeholder={book ? t.libAskPlaceholder : t.libAskAllPlaceholder} className="flex-1 min-w-0 bg-transparent py-3.5 outline-hidden text-lg placeholder-gray-400" />
           <button onClick={() => send()} disabled={!input.trim() || busy} aria-label={t.send || 'Send'}
             className="w-11 h-11 rounded-full bg-agri-700 text-white flex items-center justify-center disabled:bg-gray-300 shrink-0"><Send size={18} /></button>
         </div>

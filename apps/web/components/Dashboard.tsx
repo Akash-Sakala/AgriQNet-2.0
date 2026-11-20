@@ -31,7 +31,7 @@ const moistureData = [
 ];
 
 const StatCard: React.FC<{title: string, value: string, icon: any, color: string, trend: string}> = ({title, value, icon: Icon, color, trend}) => (
-  <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
+  <div className="bg-white p-6 rounded-3xl shadow-xs border border-gray-100 hover:shadow-lg transition-shadow">
     <div className="flex justify-between items-start">
       <div>
         <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
@@ -106,7 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user }) => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-3xl shadow-xs border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-lg text-gray-800">{t.yieldProj}</h3>
             <button className="p-2 hover:bg-gray-50 rounded-lg"><TrendingUp size={20} className="text-gray-400" /></button>
@@ -130,7 +130,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lang, user }) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-3xl shadow-xs border border-gray-100">
           <div className="flex justify-between items-center mb-6">
              <h3 className="font-bold text-lg text-gray-800">{t.soilMoisture}</h3>
              <div className="flex gap-2 text-sm">

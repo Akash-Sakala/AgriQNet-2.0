@@ -1,0 +1,125 @@
+/* AgriQNet web styles: Tailwind v4 (built by Vite) on top of the design-system tokens. */
+@import "tailwindcss";
+@import "../../../design-system/agriqnet/tokens.css";
+
+/* Class names stay the same as before (bg-agri-700, text-gray-600, bg-paper, shadow-soft ...),
+   but every colour now reads a CSS variable, so the Sunlight theme re-colours the whole app. */
+@theme inline {
+  --color-agri-50: var(--agri-50); --color-agri-100: var(--agri-100); --color-agri-200: var(--agri-200);
+  --color-agri-300: var(--agri-300); --color-agri-400: var(--agri-400); --color-agri-500: var(--agri-500);
+  --color-agri-600: var(--agri-600); --color-agri-700: var(--agri-700); --color-agri-800: var(--agri-800);
+  --color-agri-900: var(--agri-900); --color-agri-950: var(--agri-950);
+
+  --color-gray-50: var(--gray-50); --color-gray-100: var(--gray-100); --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300); --color-gray-400: var(--gray-400); --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600); --color-gray-700: var(--gray-700); --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-gold-100: var(--gold-100); --color-gold-300: var(--gold-300);
+  --color-gold-500: var(--gold-500); --color-gold-700: var(--gold-700);
+
+  /* semantic utilities: bg-surface, text-muted, border-subtle, ring-focus ... */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--border);
+  --color-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-focus: var(--ring);
+
+  --font-sans: 'Inter', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif;
+  --font-display: 'Fraunces', 'Noto Serif Kannada', 'Noto Serif Telugu', 'Noto Serif Devanagari', Georgia, serif;
+
+  --shadow-soft: var(--elev-soft);
+  --shadow-lift: var(--elev-lift);
+}
+
+@layer base {
+  /* Tailwind v3 defaults the old CDN build relied on */
+  *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--border); }
+  input::placeholder, textarea::placeholder { color: var(--gray-500); opacity: 1; }
+  button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+
+  html { background-color: var(--bg); }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Indic scripts need a little more line height */
+  :lang(kn) body, :lang(te) body, :lang(hi) body { line-height: 1.6; }
+
+  /* Headings: Fraunces for Latin, Noto Serif for Kannada / Telugu / Devanagari */
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+  }
+  :focus-visible { outline: var(--ring-width) solid var(--ring); outline-offset: 2px; border-radius: 10px; }
+}
+
+/* Sunlight theme: no translucency or blur, thicker control borders */
+[data-theme="sun"] {
+  .backdrop-blur-md, .backdrop-blur-xs, .backdrop-blur { backdrop-filter: none; }
+  /* light card/control edges become solid dark lines (backgrounds keep their light greys) */
+  :is(.border-gray-100, .border-gray-200, .border-gray-300, .border-agri-100, .border-agri-200, .border-agri-300) { border-color: #0F1A14; }
+  :is(button, input, select, textarea):is(.border, .border-2) { border-width: 2px; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+/* furrow lines used behind the home field card */
+.furrows { background-image: repeating-linear-gradient(-28deg, rgba(255,255,255,.055) 0 2px, transparent 2px 22px); }
+
+/* horizontal shelves: scroll, but no visible scrollbar */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.shimmer {
+  background: linear-gradient(90deg, var(--gray-100) 0px, var(--gray-50) 120px, var(--gray-100) 240px);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none; }
+}
+/* in-app "Reduce motion" switch */
+[data-motion="reduce"] *, [data-motion="reduce"] *::before, [data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
+}
+
+/* Sheet open/close (Radix data-state). Bottom sheet slides up on phones, fades + scales on larger screens. */
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheet-down { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: translate(-50%, -48%) scale(.97); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.sheet-overlay[data-state="open"] { animation: fade-in var(--dur-base) var(--ease-standard); }
+.sheet-overlay[data-state="closed"] { animation: fade-out var(--dur-fast) var(--ease-exit); }
+.sheet-content[data-side="bottom"][data-state="open"] { animation: sheet-up var(--dur-slow) var(--ease-standard); }
+.sheet-content[data-side="bottom"][data-state="closed"] { animation: sheet-down var(--dur-base) var(--ease-exit); }
+@media (min-width: 640px) {
+  .sheet-content[data-side="bottom"][data-state="open"] { animation: pop-in var(--dur-base) var(--ease-standard); }
+  .sheet-content[data-side="bottom"][data-state="closed"] { animation: fade-out var(--dur-fast) var(--ease-exit); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-overlay, .sheet-content { animation: none !important; }
+}

@@ -222,7 +222,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lang, user }) => {
             placeholder={t.searchCity}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-24 focus:w-36 transition-all duration-300 bg-white/20 backdrop-blur-md text-white placeholder-white/60 text-xs rounded-l-full px-3 py-1.5 outline-none border border-white/20 border-r-0"
+            className="w-24 focus:w-36 transition-all duration-300 bg-white/20 backdrop-blur-md text-white placeholder-white/60 text-xs rounded-l-full px-3 py-1.5 outline-hidden border border-white/20 border-r-0"
          />
          <button type="submit" className="bg-white/20 backdrop-blur-md text-white rounded-r-full px-2 py-1.5 hover:bg-white/30 border border-white/20 border-l-0 flex items-center justify-center">
             <Search size={14} />
@@ -240,12 +240,12 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lang, user }) => {
             <p className="text-blue-100 mt-1 font-medium text-lg">{weather.condition}</p>
           </div>
         </div>
-        <div className="text-blue-100/90 bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/10 shadow-inner transition-transform hover:scale-105 duration-300 mt-6">
+        <div className="text-blue-100/90 bg-white/10 p-4 rounded-2xl backdrop-blur-xs border border-white/10 shadow-inner transition-transform hover:scale-105 duration-300 mt-6">
            {getWeatherIcon(weather.code, 48)}
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mt-6 bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+      <div className="grid grid-cols-3 gap-4 mt-6 bg-white/10 rounded-2xl p-4 backdrop-blur-xs border border-white/10">
         <div className="flex flex-col items-center">
           <Droplets size={20} className="mb-1 text-blue-200" />
           <span className="text-sm font-semibold">{weather.humidity}%</span>

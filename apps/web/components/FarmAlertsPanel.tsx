@@ -54,7 +54,7 @@ const FarmAlertsPanel: React.FC<{ user?: Farmer | null; lang: Language }> = ({ u
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Weather alerts */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+      <div className="bg-white p-6 rounded-3xl shadow-xs border border-gray-100">
         <div className="flex items-center gap-2 mb-4">
           <CloudLightning className="text-blue-500" size={22} />
           <h3 className="font-bold text-lg text-gray-800">{t.weatherAlertsTitle}</h3>
@@ -76,7 +76,7 @@ const FarmAlertsPanel: React.FC<{ user?: Farmer | null; lang: Language }> = ({ u
       </div>
 
       {/* Pest outbreaks */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+      <div className="bg-white p-6 rounded-3xl shadow-xs border border-gray-100">
         <div className="flex items-center gap-2 mb-4">
           <Bug className="text-red-500" size={22} />
           <h3 className="font-bold text-lg text-gray-800">{t.activeOutbreaks}</h3>
@@ -98,7 +98,7 @@ const FarmAlertsPanel: React.FC<{ user?: Farmer | null; lang: Language }> = ({ u
       </div>
 
       {/* Service status */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+      <div className="bg-white p-6 rounded-3xl shadow-xs border border-gray-100">
         <div className="flex items-center gap-2 mb-4">
           <Activity className="text-agri-600" size={22} />
           <h3 className="font-bold text-lg text-gray-800">{t.serviceStatus}</h3>

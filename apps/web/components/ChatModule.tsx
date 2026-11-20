@@ -206,7 +206,7 @@ const ChatModule: React.FC<ChatModuleProps> = ({ lang, user, onBack, onNavigate 
       <div className="flex-1 bg-paper rounded-3xl shadow-soft border border-gray-100 flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="p-3 md:p-4 border-b border-gray-100 bg-white/50 backdrop-blur-sm flex items-center justify-between gap-2">
+        <div className="p-3 md:p-4 border-b border-gray-100 bg-white/50 backdrop-blur-xs flex items-center justify-between gap-2">
           <div className="hidden md:flex items-center gap-3">
              <div className="w-10 h-10 bg-agri-700 rounded-full flex items-center justify-center text-white shadow-md">
                <Bot size={20} />
@@ -298,13 +298,13 @@ const ChatModule: React.FC<ChatModuleProps> = ({ lang, user, onBack, onNavigate 
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder={t.typeOrSpeak}
-              className="flex-1 bg-transparent px-3 py-4 outline-none text-lg text-gray-800 placeholder-gray-400 min-w-0"
+              className="flex-1 bg-transparent px-3 py-4 outline-hidden text-lg text-gray-800 placeholder-gray-400 min-w-0"
             />
             
             <button 
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
-              className="mr-2 p-3 bg-agri-700 text-white rounded-full hover:bg-agri-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md hover:shadow-soft flex-shrink-0"
+              className="mr-2 p-3 bg-agri-700 text-white rounded-full hover:bg-agri-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md hover:shadow-soft shrink-0"
             >
               <Send size={18} />
             </button>

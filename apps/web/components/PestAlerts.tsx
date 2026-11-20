@@ -169,7 +169,7 @@ const SmsSignup: React.FC<{ lang: Language; user: Farmer }> = ({ lang, user }) =
             <>
               <div className="flex items-center gap-2 bg-paper border border-gray-200 rounded-2xl px-4">
                 <Phone size={20} className="text-gray-400" />
-                <input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.mobileNumber} className="flex-1 bg-transparent outline-none text-lg py-3.5" />
+                <input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.mobileNumber} className="flex-1 bg-transparent outline-hidden text-lg py-3.5" />
               </div>
               <DistrictPicker lang={lang} value={districtId} onChange={setDistrictId} />
               {err && <p className="text-red-600">{err}</p>}

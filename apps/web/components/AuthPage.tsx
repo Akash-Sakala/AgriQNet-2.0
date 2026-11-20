@@ -97,7 +97,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin, onLangChange }) => {
       <div className="flex-1 min-w-0 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-agri-400">
         <Phone size={20} className="text-gray-400" />
         <input type="tel" inputMode="numeric" autoComplete="tel-national" value={form.phone} onChange={(e) => set('phone')(e.target.value)} placeholder="98765 43210"
-          className="flex-1 min-w-0 bg-transparent outline-none text-lg py-3.5 text-gray-900" required />
+          className="flex-1 min-w-0 bg-transparent outline-hidden text-lg py-3.5 text-gray-900" required />
       </div>
     </div>
   );
@@ -105,7 +105,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin, onLangChange }) => {
     <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-agri-400">
       <Lock size={20} className="text-gray-400" />
       <input type="password" autoComplete={view === 'login' ? 'current-password' : 'new-password'} value={form.password} onChange={(e) => set('password')(e.target.value)} placeholder="••••"
-        className="flex-1 min-w-0 bg-transparent outline-none text-lg py-3.5 text-gray-900" required />
+        className="flex-1 min-w-0 bg-transparent outline-hidden text-lg py-3.5 text-gray-900" required />
     </div>
   );
   const Err = error ? <div role="alert" className="p-3 bg-red-50 text-red-700 rounded-xl border border-red-100 flex gap-2 items-start"><AlertTriangle size={18} className="shrink-0 mt-0.5" />{error}</div> : null;
@@ -206,7 +206,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin, onLangChange }) => {
               )}
               {Err}
               <input type="text" inputMode="numeric" autoComplete="one-time-code" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} maxLength={6} placeholder="••••••" required
-                className="w-full text-center text-3xl font-bold tracking-[0.5em] p-4 bg-gray-50 border-2 border-gray-200 rounded-2xl outline-none focus:border-agri-500" />
+                className="w-full text-center text-3xl font-bold tracking-[0.5em] p-4 bg-gray-50 border-2 border-gray-200 rounded-2xl outline-hidden focus:border-agri-500" />
               <button type="submit" disabled={loading} className={`${big} bg-agri-700 text-white hover:bg-agri-800 shadow-soft`}>
                 {loading ? <Loader2 className="animate-spin" /> : <><SealCheck size={22} weight="duotone" /> {t.verifyRegister}</>}
               </button>
