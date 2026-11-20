@@ -848,5 +848,13 @@
   "whatToDoNow": "What to do now",
   "sureWord": "Sure",
   "maybeWord": "Probably",
-  "unsureWord": "Not sure"
+  "unsureWord": "Not sure",
+  "youAreHere": "You are here",
+  "zoomIn": "Zoom in",
+  "zoomOut": "Zoom out",
+  "showAllMap": "Show all of Karnataka",
+  "nearYouTitle": "Near you",
+  "nothingNearYou": "No pest warnings near your farm right now.",
+  "pestInDistrict": "{pest} in {district}",
+  "mapHint": "Pinch or tap + to zoom. Tap a district to see details."
 }
