@@ -103,6 +103,7 @@ router.put('/auth/profile', optionalAuth, ah(async (req, res) => {
   if (!user) return res.status(404).json({ message: 'User not found' });
   const { lang, districtId, crops, name } = req.body;
   if (lang) user.lang = normLang(lang);
+  for (const k of ['soilType', 'waterSource', 'fieldSize']) if (typeof req.body[k] === 'string') user[k] = req.body[k].slice(0, 40);
   if (name) user.name = String(name).slice(0, 80);
   if (Array.isArray(crops)) user.crops = crops.slice(0, 8).map(String);
   if (districtId && districtId !== user.districtId) {

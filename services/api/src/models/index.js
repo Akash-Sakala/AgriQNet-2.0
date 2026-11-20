@@ -19,6 +19,10 @@ const UserSchema = new Schema(
     lang: { type: String, enum: ['en', 'hi', 'kn', 'te'], default: 'en' }, // preferred language (UI + SMS)
     role: { type: String, enum: ['farmer', 'officer'], default: 'farmer' },
     crops: [String], // crops the farmer grows (English keys, e.g. 'ragi') – personalises advice
+    // farm profile reused by the crop and fertilizer advisors (English values, e.g. 'Red Soil')
+    soilType: { type: String, default: '' },
+    waterSource: { type: String, default: '' },
+    fieldSize: { type: String, default: '' },
     passwordHash: { type: String, required: true },
     isDemo: { type: Boolean, default: false },
   },
@@ -34,6 +38,9 @@ UserSchema.methods.toPublic = function toPublic() {
     lang: this.lang,
     role: this.role,
     crops: this.crops || [],
+    soilType: this.soilType || '',
+    waterSource: this.waterSource || '',
+    fieldSize: this.fieldSize || '',
   };
 };
 

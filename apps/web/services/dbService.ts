@@ -23,7 +23,7 @@ export const DBService = {
   },
 
   /** Change language / district / crops of the logged-in farmer (server keeps SMS alerts in sync). */
-  async updateProfile(changes: { lang?: string; districtId?: string; crops?: string[]; name?: string }): Promise<Farmer> {
+  async updateProfile(changes: { lang?: string; districtId?: string; crops?: string[]; name?: string; soilType?: string; waterSource?: string; fieldSize?: string }): Promise<Farmer> {
     const data = await api<{ user: Farmer }>('/auth/profile', { method: 'PUT', json: changes });
     const user = { ...data.user, token: this.getCachedUser()?.token };
     this.cacheUser(user);
